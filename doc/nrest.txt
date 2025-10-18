@@ -1,0 +1,840 @@
+*nrest.txt*    Fast HTTP REST client for Neovim
+
+==============================================================================
+CONTENTS                                                      *nrest-contents*
+
+  1. Introduction ..................................... |nrest-introduction|
+  2. Requirements ..................................... |nrest-requirements|
+  3. Installation ..................................... |nrest-installation|
+  4. Quick Start ...................................... |nrest-quickstart|
+  5. Commands ......................................... |nrest-commands|
+  6. Keybindings ...................................... |nrest-keybindings|
+  7. Configuration .................................... |nrest-configuration|
+  8. HTTP Syntax ...................................... |nrest-http-syntax|
+  9. Variables ........................................ |nrest-variables|
+  10. Authentication .................................. |nrest-authentication|
+  11. Response Display ................................ |nrest-response|
+  12. Examples ........................................ |nrest-examples|
+  13. Troubleshooting ................................. |nrest-troubleshooting|
+  14. About ........................................... |nrest-about|
+
+==============================================================================
+INTRODUCTION                                              *nrest-introduction*
+
+nrest.nvim is a fast and lightweight HTTP REST client for Neovim, inspired
+by VS Code's REST Client extension. Execute HTTP requests directly from
+`.http` files with syntax highlighting and asynchronous request execution.
+
+Features:
+  • Execute HTTP requests from .http files
+  • Simple and intuitive syntax
+  • Asynchronous request execution with timeout support
+  • Syntax highlighting for requests and responses
+  • Clean response display in split windows
+  • Authentication presets (Basic, Bearer, API Key, Digest)
+  • Environment variable support
+  • Request validation
+  • Automatic redirect handling
+  • Zero external Lua dependencies (uses curl)
+
+==============================================================================
+REQUIREMENTS                                              *nrest-requirements*
+
+  • Neovim >= 0.8.0 (for modern Lua APIs)
+  • curl - Must be available in PATH for executing HTTP requests
+  • jq (optional) - For JSON response formatting (pretty-printing)
+
+==============================================================================
+INSTALLATION                                              *nrest-installation*
+
+Using lazy.nvim ~
+>lua
+  {
+    'https://gitlab.ttu.ch/matthias/nrest.git',
+    ft = 'http',
+    config = function()
+      require('nrest').setup({
+        -- Your configuration here (see |nrest-configuration|)
+      })
+    end,
+  }
+<
+
+Using packer.nvim ~
+>lua
+  use {
+    'https://gitlab.ttu.ch/matthias/nrest.git',
+    ft = 'http',
+    config = function()
+      require('nrest').setup({
+        -- Your configuration here (see |nrest-configuration|)
+      })
+    end,
+  }
+<
+
+Manual Installation ~
+
+Clone the repository into your Neovim plugin directory:
+>bash
+  # For Unix/Linux/macOS
+  git clone https://gitlab.ttu.ch/matthias/nrest.git \
+    ~/.local/share/nvim/site/pack/plugins/start/nrest.nvim
+
+  # For Windows
+  git clone https://gitlab.ttu.ch/matthias/nrest.git \
+    %LOCALAPPDATA%\nvim-data\site\pack\plugins\start\nrest.nvim
+<
+
+Then add to your `init.lua`:
+>lua
+  require('nrest').setup({
+    -- Your configuration here
+  })
+<
+
+==============================================================================
+QUICK START                                                *nrest-quickstart*
+
+1. Create a file with the `.http` extension
+2. Write an HTTP request:
+>http
+  ### My first request
+  GET https://api.github.com/users/github
+<
+
+3. Execute the request:
+   - Place cursor on the request
+   - Press `<leader>hc` (or use |:NrestRunCursor|)
+   - View the response in the split window
+
+==============================================================================
+COMMANDS                                                      *nrest-commands*
+
+                                                                    *:NrestRun*
+:NrestRun               Execute the first HTTP request in the current buffer.
+                        Useful for quickly testing a single request.
+
+                                                              *:NrestRunCursor*
+:NrestRunCursor         Execute the HTTP request under the cursor.
+                        Automatically detects which request block contains
+                        the cursor and executes it.
+
+==============================================================================
+KEYBINDINGS                                                *nrest-keybindings*
+
+Default keybindings (customizable in |nrest-configuration|):
+
+  <leader>hr            Run first request in file (same as |:NrestRun|)
+  <leader>hc            Run request under cursor (same as |:NrestRunCursor|)
+
+In response buffer (when folding is enabled):
+  za                    Toggle fold under cursor
+  zR                    Open all folds
+  zM                    Close all folds
+  zo                    Open fold
+  zc                    Close fold
+
+==============================================================================
+CONFIGURATION                                            *nrest-configuration*
+
+Configure nrest.nvim using the `setup()` function:
+>lua
+  require('nrest').setup({
+    -- All options are optional, these are the defaults
+    result_split_horizontal = false,
+    skip_ssl_verification = false,
+    timeout = 10000,
+    format_response = true,
+    env_file = nil,
+    highlight = {
+      enabled = true,
+      timeout = 150,
+    },
+    result = {
+      show_url = true,
+      show_http_info = true,
+      show_headers = true,
+      show_body = true,
+      folding = true,
+    },
+    keybindings = {
+      run_request = '<leader>hr',
+      run_request_under_cursor = '<leader>hc',
+    },
+  })
+<
+
+Configuration Options ~
+
+                                            *nrest-config-result_split_horizontal*
+result_split_horizontal         (boolean, default: false)
+    Split direction for result window.
+    • false - Vertical split (side-by-side)
+    • true  - Horizontal split (top-bottom)
+
+                                            *nrest-config-skip_ssl_verification*
+skip_ssl_verification           (boolean, default: false)
+    Skip SSL certificate verification (passes `-k` flag to curl).
+    Useful for development with self-signed certificates.
+    WARNING: Only use in development environments!
+
+                                                         *nrest-config-timeout*
+timeout                         (number, default: 10000)
+    Request timeout in milliseconds. Requests exceeding this time
+    will be terminated automatically.
+
+                                                  *nrest-config-format_response*
+format_response                 (boolean, default: true)
+    Format JSON responses using `jq` for pretty-printing.
+    Requires `jq` to be installed and available in PATH.
+    Falls back to raw response if jq is not available.
+
+                                                        *nrest-config-env_file*
+env_file                        (string|nil, default: nil)
+    Path to environment file for variable loading.
+    • nil     - Disabled (no env file loading)
+    • 'auto'  - Auto-discover `.env.http` in directory hierarchy
+    • 'path'  - Specific file path (e.g., '.env.http')
+
+    When set to 'auto', searches for `.env.http` starting from the
+    directory of the current `.http` file, walking up to the root.
+
+                                                  *nrest-config-highlight*
+highlight                       (table)
+    Syntax highlighting configuration.
+
+    highlight.enabled           (boolean, default: true)
+        Enable syntax highlighting for .http files.
+
+    highlight.timeout           (number, default: 150)
+        Highlighting timeout in milliseconds.
+
+                                                          *nrest-config-result*
+result                          (table)
+    Control what's displayed in the response buffer.
+
+    result.show_url             (boolean, default: true)
+        Show the request URL in the response.
+
+    result.show_http_info       (boolean, default: true)
+        Show HTTP status line (e.g., "HTTP/1.1 200 OK").
+
+    result.show_headers         (boolean, default: true)
+        Show response headers.
+
+    result.show_body            (boolean, default: true)
+        Show response body.
+
+    result.folding              (boolean, default: true)
+        Enable folding for headers section. Use |za| to toggle.
+        Headers start folded (collapsed) by default.
+
+                                                    *nrest-config-keybindings*
+keybindings                     (table)
+    Customize keybindings for request execution.
+
+    keybindings.run_request              (string, default: '<leader>hr')
+        Keybinding to run first request in file.
+
+    keybindings.run_request_under_cursor (string, default: '<leader>hc')
+        Keybinding to run request under cursor.
+
+Configuration Examples ~
+
+Skip SSL verification for development:
+>lua
+  require('nrest').setup({
+    skip_ssl_verification = true,
+  })
+<
+
+Use horizontal split for results:
+>lua
+  require('nrest').setup({
+    result_split_horizontal = true,
+  })
+<
+
+Auto-discover environment file:
+>lua
+  require('nrest').setup({
+    env_file = 'auto',  -- Searches for .env.http up directory tree
+  })
+<
+
+Disable JSON formatting:
+>lua
+  require('nrest').setup({
+    format_response = false,
+  })
+<
+
+Custom keybindings:
+>lua
+  require('nrest').setup({
+    keybindings = {
+      run_request = '<C-CR>',
+      run_request_under_cursor = '<CR>',
+    },
+  })
+<
+
+==============================================================================
+HTTP SYNTAX                                                *nrest-http-syntax*
+
+Request Format ~
+
+A basic HTTP request consists of:
+  1. Optional request separator (`###` with optional name)
+  2. Method and URL line
+  3. Optional headers (key: value pairs)
+  4. Optional blank line + request body
+
+Example:
+>http
+  ### Request name (optional)
+  METHOD URL
+  Header-Name: value
+  Another-Header: value
+
+  Request body goes here
+<
+
+Request Separators ~                                     *nrest-request-separator*
+
+Use `###` to separate multiple requests in the same file:
+>http
+  ### First request
+  GET https://api.example.com/users
+
+  ### Second request
+  POST https://api.example.com/users
+  Content-Type: application/json
+
+  {"name": "John"}
+<
+
+Supported HTTP Methods ~                                 *nrest-http-methods*
+
+All standard HTTP methods are supported:
+  • GET     - Retrieve data
+  • POST    - Send data
+  • PUT     - Update/replace data
+  • PATCH   - Partial update
+  • DELETE  - Remove data
+  • HEAD    - Get headers only
+  • OPTIONS - Get supported methods
+  • CONNECT - Establish tunnel
+  • TRACE   - Echo request
+
+Headers ~                                                 *nrest-http-headers*
+
+Headers are specified as key-value pairs after the method line:
+>http
+  GET https://api.example.com/data
+  Accept: application/json
+  User-Agent: nrest.nvim
+  Authorization: Bearer token123
+<
+
+Request Body ~                                            *nrest-http-body*
+
+The request body starts after a blank line following the headers:
+>http
+  POST https://api.example.com/users
+  Content-Type: application/json
+
+  {
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+<
+
+==============================================================================
+VARIABLES                                                    *nrest-variables*
+
+nrest.nvim supports two types of variables: user-defined and system
+environment variables.
+
+User-Defined Variables ~                                 *nrest-user-variables*
+
+Define variables with `@name = value` and use them with `{{name}}`:
+>http
+  @baseUrl = https://api.example.com
+  @token = Bearer abc123
+
+  ### Use variables in request
+  GET {{baseUrl}}/users
+  Authorization: {{token}}
+<
+
+Variables work in:
+  • URLs
+  • Headers
+  • Request bodies
+  • Authentication directives
+
+System Environment Variables ~                           *nrest-env-variables*
+
+Use system environment variables with `$VAR` or `${VAR}`:
+>http
+  ### Using system env vars
+  GET https://api.example.com/data
+  Authorization: Bearer $API_TOKEN
+  X-User: $USER
+
+  {
+    "home": "${HOME}",
+    "shell": "$SHELL"
+  }
+<
+
+Combining Variables ~                                    *nrest-variable-combining*
+
+User-defined variables can reference system environment variables:
+>http
+  @apiKey = Bearer $API_TOKEN
+  @dataPath = ${HOME}/api-data
+
+  GET https://api.example.com/data
+  Authorization: {{apiKey}}
+  X-Path: {{dataPath}}
+<
+
+Environment Files ~                                       *nrest-env-files*
+
+Store variables in a separate `.env.http` file:
+
+.env.http:
+>http
+  @baseUrl = https://api.example.com
+  @apiKey = secret123
+<
+
+test.http:
+>http
+  GET {{baseUrl}}/users
+  Authorization: Bearer {{apiKey}}
+<
+
+Enable in configuration:
+>lua
+  require('nrest').setup({
+    env_file = 'auto',  -- Auto-discover .env.http
+    -- or
+    env_file = '.env.http',  -- Specific path
+  })
+<
+
+Variable Priority ~                                       *nrest-variable-priority*
+
+Variables are resolved in this order (highest to lowest):
+  1. User-defined variables in `.http` buffer (`@var = value`)
+  2. Variables from env file (`.env.http`)
+  3. System environment variables (`$VAR`, `${VAR}`)
+
+Substitution Order ~                                     *nrest-variable-substitution*
+
+Variables are substituted in this order:
+  1. System environment variables are substituted first
+  2. User-defined variables are substituted second
+
+This allows user variables to reference system variables:
+>http
+  @token = Bearer $API_TOKEN  # System var substituted here
+
+  GET https://api.example.com/data
+  Authorization: {{token}}     # User var substituted here
+<
+
+IMPORTANT: Don't mix syntaxes!
+  • User-defined: `{{variableName}}`
+  • System env:   `$VAR` or `${VAR}`
+
+==============================================================================
+AUTHENTICATION                                          *nrest-authentication*
+
+nrest.nvim supports common authentication methods with simple directives.
+Authentication can be applied per-request or globally to all requests.
+
+Request-Scoped Authentication ~                          *nrest-request-auth*
+
+Apply authentication to individual requests by placing the `@auth` directive
+after the HTTP method line:
+>http
+  ### Authenticated request
+  GET https://api.example.com/protected
+  @auth basic username password
+
+  ### Public request (no auth)
+  GET https://api.example.com/public
+<
+
+File-Level Authentication ~                              *nrest-file-auth*
+
+Define authentication at the file level to apply to ALL requests:
+>http
+  @auth bearer global-token-123
+
+  ### Request 1 (uses global auth)
+  GET https://api.example.com/users
+
+  ### Request 2 (also uses global auth)
+  GET https://api.example.com/posts
+<
+
+NOTE: Request-scoped auth overrides file-level auth.
+
+Authentication Types ~                                    *nrest-auth-types*
+
+Basic Authentication ~                                    *nrest-auth-basic*
+>http
+  @auth basic username password
+<
+HTTP Basic Authentication encodes username:password in base64 and adds
+the `Authorization: Basic <encoded>` header.
+
+Example:
+>http
+  GET https://httpbin.org/basic-auth/user/pass
+  @auth basic user pass
+<
+
+Bearer Token Authentication ~                             *nrest-auth-bearer*
+>http
+  @auth bearer <token>
+<
+Commonly used for JWT tokens. Adds `Authorization: Bearer <token>` header.
+
+Example:
+>http
+  GET https://api.example.com/user/profile
+  @auth bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+<
+
+API Key Authentication ~                                  *nrest-auth-apikey*
+>http
+  @auth apikey <header-name> <api-key>
+<
+Adds a custom header with the specified name and API key value.
+
+Example:
+>http
+  GET https://api.example.com/data
+  @auth apikey X-API-Key abc123def456
+<
+
+Digest Authentication ~                                   *nrest-auth-digest*
+>http
+  @auth digest username password
+<
+HTTP Digest Authentication using curl's `--digest` flag.
+
+Example:
+>http
+  GET https://httpbin.org/digest-auth/auth/user/pass
+  @auth digest user pass
+<
+
+Authentication with Variables ~                           *nrest-auth-variables*
+
+Auth directives support both user-defined and system variables:
+>http
+  @token = my-secret-token
+
+  ### Uses user-defined variable
+  GET https://api.example.com/protected
+  @auth bearer {{token}}
+
+  ### Uses system environment variable
+  GET https://api.example.com/data
+  @auth bearer $API_TOKEN
+
+  ### Combining both
+  @myToken = Bearer $API_TOKEN
+  GET https://api.example.com/user
+  @auth bearer {{myToken}}
+<
+
+==============================================================================
+RESPONSE DISPLAY                                              *nrest-response*
+
+Response Format ~                                         *nrest-response-format*
+
+The response is displayed in a split window with:
+  1. Request URL
+  2. HTTP status line (e.g., "HTTP/1.1 200 OK")
+  3. Response headers (foldable)
+  4. Response body
+
+Example response:
+>
+  Request: GET https://api.github.com/users/github
+
+  HTTP/1.1 200 OK
+
+  {{{ Headers }}}
+  content-type: application/json
+  content-length: 1234
+  ...
+  {{{ End Headers }}}
+
+  {
+    "login": "github",
+    "id": 1,
+    ...
+  }
+<
+
+JSON Formatting ~                                         *nrest-json-formatting*
+
+JSON responses are automatically formatted with `jq` when available:
+  • Detects JSON by Content-Type header or content inspection
+  • Pretty-prints with proper indentation
+  • Falls back to raw response if jq is not installed
+  • Can be disabled with `format_response = false`
+
+Response Folding ~                                        *nrest-response-folding*
+
+Headers can be folded to reduce clutter:
+  • za - Toggle fold under cursor
+  • zR - Open all folds
+  • zM - Close all folds
+  • zo - Open fold
+  • zc - Close fold
+
+By default, headers start folded (collapsed).
+
+Disable folding:
+>lua
+  require('nrest').setup({
+    result = {
+      folding = false,
+    },
+  })
+<
+
+Customizing Response Display ~                            *nrest-response-custom*
+
+Control what's shown in the response:
+>lua
+  require('nrest').setup({
+    result = {
+      show_url = true,        -- Show request URL
+      show_http_info = true,  -- Show HTTP status line
+      show_headers = true,    -- Show response headers
+      show_body = true,       -- Show response body
+    },
+  })
+<
+
+==============================================================================
+EXAMPLES                                                      *nrest-examples*
+
+Basic GET Request ~
+>http
+  ### Get GitHub user
+  GET https://api.github.com/users/github
+<
+
+POST with JSON Body ~
+>http
+  ### Create user
+  POST https://httpbin.org/post
+  Content-Type: application/json
+
+  {
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+<
+
+Request with Authentication ~
+>http
+  ### Authenticated request
+  GET https://api.example.com/protected
+  @auth bearer abc123xyz789
+<
+
+Using Variables ~
+>http
+  @baseUrl = https://api.example.com
+  @token = Bearer secret123
+
+  ### Get users
+  GET {{baseUrl}}/users
+  Authorization: {{token}}
+
+  ### Create user
+  POST {{baseUrl}}/users
+  Authorization: {{token}}
+  Content-Type: application/json
+
+  {
+    "api": "{{baseUrl}}",
+    "authenticated": true
+  }
+<
+
+Multiple Requests in One File ~
+>http
+  ### List users
+  GET https://api.example.com/users
+
+  ### Get specific user
+  GET https://api.example.com/users/123
+
+  ### Update user
+  PATCH https://api.example.com/users/123
+  Content-Type: application/json
+
+  {
+    "name": "Updated Name"
+  }
+
+  ### Delete user
+  DELETE https://api.example.com/users/123
+<
+
+Using Environment Variables ~
+>http
+  ### Using system env vars
+  GET https://api.example.com/data
+  Authorization: Bearer $API_TOKEN
+
+  ### Combining with user vars
+  @endpoint = ${API_BASE_URL}/users
+
+  GET {{endpoint}}
+  X-User: $USER
+<
+
+Request-Scoped vs File-Level Auth ~
+>http
+  # File-level auth (applies to all requests by default)
+  @auth bearer file-level-token
+
+  ### Request 1 (uses file-level auth)
+  GET https://api.example.com/users
+
+  ### Request 2 (overrides with request-scoped auth)
+  GET https://api.example.com/admin
+  @auth bearer admin-token
+
+  ### Request 3 (uses file-level auth again)
+  GET https://api.example.com/posts
+<
+
+Working with .env.http ~
+
+.env.http:
+>http
+  @apiUrl = https://api.example.com
+  @authToken = secret123
+<
+
+requests.http:
+>http
+  ### Get data
+  GET {{apiUrl}}/data
+  Authorization: Bearer {{authToken}}
+<
+
+Configuration for auto-discovery:
+>lua
+  require('nrest').setup({
+    env_file = 'auto',
+  })
+<
+
+==============================================================================
+TROUBLESHOOTING                                        *nrest-troubleshooting*
+
+Request Not Found ~
+
+If you see "No valid HTTP request found":
+  • Ensure the file has `.http` extension
+  • Check that the method line format is correct: `METHOD URL`
+  • Verify that the URL starts with `http://` or `https://`
+  • Make sure cursor is within a request block when using |:NrestRunCursor|
+
+Request Timeout ~
+
+If requests timeout frequently:
+  • Increase timeout in configuration:
+>lua
+    require('nrest').setup({
+      timeout = 30000,  -- 30 seconds
+    })
+<
+  • Check network connectivity
+  • Verify the target server is responding
+
+SSL Certificate Errors ~
+
+If you encounter SSL certificate verification errors:
+>lua
+  require('nrest').setup({
+    skip_ssl_verification = true,  -- Use only in development!
+  })
+<
+
+JSON Not Formatted ~
+
+If JSON responses aren't formatted:
+  • Ensure `jq` is installed and in PATH
+  • Check that `format_response = true` in configuration
+  • Verify response has correct Content-Type header
+
+Variables Not Substituted ~
+
+If variables aren't being replaced:
+  • Check syntax: User vars use `{{name}}`, env vars use `$VAR`
+  • Verify variable is defined before use
+  • For env files, ensure `env_file` is configured
+  • Check that variables don't have syntax errors in definition
+
+Authentication Not Working ~
+
+If auth doesn't work:
+  • Verify auth directive syntax: `@auth <type> <params...>`
+  • Check that auth type is one of: basic, bearer, apikey, digest
+  • Ensure variables in auth are properly substituted
+  • Check server response for auth errors (401, 403)
+
+Result Buffer Not Showing ~
+
+If the result buffer doesn't appear:
+  • Check for conflicting dashboard plugins
+  • Try different split direction:
+>lua
+    require('nrest').setup({
+      result_split_horizontal = true,
+    })
+<
+  • Look for error messages with `:messages`
+
+==============================================================================
+ABOUT                                                            *nrest-about*
+
+Author:         Matthias
+Repository:     https://gitlab.ttu.ch/matthias/nrest.git
+License:        MIT License
+Version:        1.0.0
+
+Inspired by VS Code's REST Client extension.
+
+For bug reports and feature requests, please visit:
+https://gitlab.ttu.ch/matthias/nrest/-/issues
+
+Contributing:
+Contributions are welcome! Please read CLAUDE.md and .ai-assistant/RULES.md
+before submitting pull requests.
+
+Similar Projects:
+  • rest.nvim - Another REST client for Neovim
+  • VS Code REST Client - The inspiration for this plugin
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:

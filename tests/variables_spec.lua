@@ -74,26 +74,41 @@ describe('variables', function()
     end)
 
     it('should substitute system env variables', function()
-      -- Use a common env var that should exist
-      local result = variables.substitute('User: $USER', {})
+      -- Set a test env var to ensure it exists
+      vim.env.NREST_TEST_VAR = 'test_value'
+      local result = variables.substitute('Value: $NREST_TEST_VAR', {})
 
-      -- Should not contain literal $USER
-      assert.is_false(result == 'User: $USER')
+      -- Should substitute the env var
+      assert.equals('Value: test_value', result)
+
+      -- Cleanup
+      vim.env.NREST_TEST_VAR = nil
     end)
 
     it('should substitute system env variables with braces', function()
-      local result = variables.substitute('Home: ${HOME}', {})
+      -- Set a test env var to ensure it exists
+      vim.env.NREST_TEST_VAR2 = 'braced_value'
+      local result = variables.substitute('Value: ${NREST_TEST_VAR2}', {})
 
-      -- Should not contain literal ${HOME}
-      assert.is_false(result == 'Home: ${HOME}')
+      -- Should substitute the env var
+      assert.equals('Value: braced_value', result)
+
+      -- Cleanup
+      vim.env.NREST_TEST_VAR2 = nil
     end)
 
     it('should handle mixed variable types', function()
+      -- Set a test env var to ensure it exists
+      vim.env.NREST_TEST_USER = 'testuser'
       local vars = { apiKey = 'secret' }
-      local result = variables.substitute('User: $USER, Key: {{apiKey}}', vars)
+      local result = variables.substitute('User: $NREST_TEST_USER, Key: {{apiKey}}', vars)
 
+      assert.is_truthy(result:match('User: testuser'))
       assert.is_truthy(result:match('Key: secret'))
       assert.is_falsy(result:match('{{apiKey}}'))
+
+      -- Cleanup
+      vim.env.NREST_TEST_USER = nil
     end)
 
     it('should return nil for nil input', function()

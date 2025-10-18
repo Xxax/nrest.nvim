@@ -105,54 +105,77 @@ GET https://api.example.com/posts
 
 ### Authentication Presets
 
-nrest.nvim supports common authentication methods with simple directives:
+nrest.nvim supports common authentication methods with simple directives. Authentication can be applied per-request or globally to all requests in a file.
+
+#### Request-Scoped Authentication
+
+Apply authentication to individual requests by placing the `@auth` directive after the HTTP method line:
 
 **Basic Authentication:**
 ```http
+### Authenticated request
+GET https://api.example.com/protected
 @auth basic username password
 
-GET https://api.example.com/protected
+### Public request (no auth)
+GET https://api.example.com/public
 ```
 
 **Bearer Token Authentication:**
 ```http
+### Request with bearer token
+GET https://api.example.com/user/profile
 @auth bearer your-token-here
-
-GET https://api.example.com/protected
 ```
 
 **API Key Authentication:**
 ```http
+### Request with API key
+GET https://api.example.com/data
 @auth apikey X-API-Key your-api-key-here
-
-GET https://api.example.com/protected
 ```
 
 **Digest Authentication:**
 ```http
-@auth digest username password
-
+### Request with digest auth
 GET https://api.example.com/protected
+@auth digest username password
 ```
 
 **Authentication with Variables:**
 ```http
 @token = my-secret-token
-@auth bearer {{token}}
 
+### Uses the variable defined above
 GET https://api.example.com/protected
+@auth bearer {{token}}
 ```
 
 **Authentication with System Environment Variables:**
 ```http
 # Using system env vars directly in auth
+GET https://api.example.com/protected
 @auth bearer $API_TOKEN
 
 # Or combining with variables
 @myToken = Bearer $API_TOKEN
-@auth bearer {{myToken}}
 
-GET https://api.example.com/protected
+GET https://api.example.com/user
+@auth bearer {{myToken}}
+```
+
+#### File-Level Authentication
+
+For backward compatibility, you can define authentication at the file level. The `@auth` directive will apply to ALL requests in the file:
+
+```http
+@auth bearer global-token-123
+
+### Request 1 (uses global auth)
+GET https://api.example.com/users
+
+### Request 2 (also uses global auth)
+GET https://api.example.com/posts
 ```
 
 **Supported Authentication Types:**
@@ -162,9 +185,9 @@ GET https://api.example.com/protected
 - `digest` - HTTP Digest Authentication (uses curl's --digest flag)
 
 **Notes:**
-- Auth directives apply to ALL requests in the file (global scope)
-- Auth is applied before variables are substituted
-- For request-specific auth, use separate files or manual headers
+- **Priority**: Request-scoped auth overrides file-level auth
+- Auth directives can use variables (`{{var}}`) and system env vars (`$VAR`)
+- Variables are substituted before auth is applied
 - Digest auth is handled by curl and supports standard digest challenges
 
 ### Environment Variables
@@ -433,9 +456,9 @@ All standard HTTP methods are supported:
 - [ ] WebSocket support
 - [ ] Import from Postman/Insomnia collections
 - [ ] Custom response handlers/hooks
-- [ ] Request-scoped authentication (per-request auth directives)
 
 **Recently Completed:**
+- [x] Request-scoped authentication (per-request auth directives)
 - [x] JSON response formatting with jq
 - [x] Authentication presets (Basic, Bearer, API Key, Digest)
 - [x] Environment variable support (`@variable = value`, `{{variable}}`)

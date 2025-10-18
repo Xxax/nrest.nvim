@@ -90,7 +90,17 @@ function M.run()
   request = variables.substitute_request(request, all_vars)
 
   -- Parse and apply authentication
-  local auth_config, auth_error = auth.parse_auth(lines)
+  -- Priority: request-scoped auth > file-level auth
+  local auth_config, auth_error
+
+  if request.auth_line then
+    -- Request has per-request auth directive
+    auth_config, auth_error = auth.parse_auth_line(request.auth_line)
+  else
+    -- Fall back to file-level auth (backward compatibility)
+    auth_config, auth_error = auth.parse_auth(lines)
+  end
+
   if auth_error then
     vim.notify('Auth error: ' .. auth_error, vim.log.levels.ERROR)
     return
@@ -169,7 +179,17 @@ function M.run_at_cursor()
   request = variables.substitute_request(request, all_vars)
 
   -- Parse and apply authentication
-  local auth_config, auth_error = auth.parse_auth(lines)
+  -- Priority: request-scoped auth > file-level auth
+  local auth_config, auth_error
+
+  if request.auth_line then
+    -- Request has per-request auth directive
+    auth_config, auth_error = auth.parse_auth_line(request.auth_line)
+  else
+    -- Fall back to file-level auth (backward compatibility)
+    auth_config, auth_error = auth.parse_auth(lines)
+  end
+
   if auth_error then
     vim.notify('Auth error: ' .. auth_error, vim.log.levels.ERROR)
     return

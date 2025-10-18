@@ -23,7 +23,8 @@ X-Home: ${HOME}
 @apiKey = my-secret-key
 @endpoint = /api/v1
 
-GET https://httpbin.org${endpoint}
+# Use {{endpoint}} for user-defined variable, $USER for system variable
+GET https://httpbin.org{{endpoint}}
 Authorization: Bearer {{apiKey}}
 X-User: $USER
 

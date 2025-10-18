@@ -38,6 +38,15 @@ function M.show_response(response, config)
   -- Show buffer in split
   M.show_buffer_in_split(result_buf, config)
 
+  -- Enable folding (must be set after window is created)
+  local result_win = vim.fn.bufwinid(result_buf)
+  if result_win ~= -1 and vim.api.nvim_win_is_valid(result_win) then
+    vim.wo[result_win].foldmethod = 'marker'
+    vim.wo[result_win].foldmarker = '{{{,}}}'
+    vim.wo[result_win].foldenable = true
+    vim.wo[result_win].foldlevel = 0
+  end
+
   -- Apply syntax highlighting
   if config.highlight.enabled then
     M.apply_syntax_highlighting(result_buf)
@@ -155,12 +164,19 @@ function M.format_response(response, config)
     table.insert(lines, '')
   end
 
-  -- Add headers
+  -- Add headers with optional folding markers
   if config.result.show_headers and next(response.headers) ~= nil then
-    table.insert(lines, '## Headers')
+    if config.result.folding then
+      table.insert(lines, '## Headers {{{')
+    else
+      table.insert(lines, '## Headers')
+    end
     table.insert(lines, '')
     for key, value in pairs(response.headers) do
       table.insert(lines, key .. ': ' .. value)
+    end
+    if config.result.folding then
+      table.insert(lines, '}}}')
     end
     table.insert(lines, '')
   end

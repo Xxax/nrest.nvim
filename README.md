@@ -294,6 +294,7 @@ require('nrest').setup({
     show_http_info = true,  -- Show HTTP status line
     show_headers = true,    -- Show response headers
     show_body = true,       -- Show response body
+    folding = true,         -- Enable folding for headers (use 'za' to toggle)
   },
 
   -- Keybindings
@@ -324,6 +325,28 @@ require('nrest').setup({
   format_response = false,  -- Show raw responses
 })
 ```
+
+### Response Folding
+
+Headers can be folded to reduce clutter in the response buffer:
+
+**Usage:**
+- `za` - Toggle fold under cursor
+- `zR` - Open all folds
+- `zM` - Close all folds
+- `zo` - Open fold
+- `zc` - Close fold
+
+**Configuration:**
+```lua
+require('nrest').setup({
+  result = {
+    folding = true,  -- Enable header folding (default: true)
+  },
+})
+```
+
+**Note:** By default, headers are folded (collapsed) when the response is displayed. Use `za` to expand them.
 
 ### Configuration Examples
 

@@ -1,0 +1,49 @@
+# Example: Using System Environment Variables
+
+# You can use system environment variables with $VAR or ${VAR} syntax
+# These are read from your shell environment (e.g., $HOME, $USER, $PATH)
+
+### GET with system environment variable
+# Uses $USER from system environment
+GET https://httpbin.org/get?user=$USER
+
+### POST with multiple system variables
+POST https://httpbin.org/post
+Content-Type: application/json
+X-User: $USER
+X-Home: ${HOME}
+
+{
+  "user": "$USER",
+  "home": "${HOME}",
+  "shell": "$SHELL"
+}
+
+### Combining system vars and custom vars
+@apiKey = my-secret-key
+@endpoint = /api/v1
+
+GET https://httpbin.org${endpoint}
+Authorization: Bearer {{apiKey}}
+X-User: $USER
+
+### Using environment-specific variables
+# Set these in your shell:
+# export API_ENV=production
+# export API_TOKEN=prod-token-123
+
+GET https://httpbin.org/headers
+X-Environment: $API_ENV
+Authorization: Bearer $API_TOKEN
+
+### Mixed variable types
+@baseUrl = https://api.example.com
+
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "$USER",
+  "apiUrl": "{{baseUrl}}",
+  "timestamp": "2024-01-01"
+}

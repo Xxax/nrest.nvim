@@ -62,6 +62,7 @@ end
 
 -- Substitute variables in text
 -- Replaces {{variableName}} with actual values
+-- Also supports system environment variables with $VAR or ${VAR}
 function M.substitute(text, vars)
   if not text then
     return text
@@ -70,8 +71,26 @@ function M.substitute(text, vars)
   -- Use provided vars or global variables
   local var_table = vars or variables
 
-  -- Replace {{variableName}} patterns
-  local result = text:gsub('{{([%w_]+)}}', function(var_name)
+  -- First, replace system environment variables: $VAR or ${VAR}
+  local result = text:gsub('%$({?)([%w_]+)(}?)', function(open_brace, var_name, close_brace)
+    -- Validate matching braces
+    if (open_brace == '{' and close_brace ~= '}') or (open_brace == '' and close_brace == '}') then
+      -- Malformed, keep original
+      return '$' .. open_brace .. var_name .. close_brace
+    end
+
+    -- Get system environment variable
+    local env_value = vim.env[var_name] or os.getenv(var_name)
+    if env_value then
+      return env_value
+    else
+      -- Keep original if not found
+      return '$' .. open_brace .. var_name .. close_brace
+    end
+  end)
+
+  -- Then, replace {{variableName}} patterns with user-defined variables
+  result = result:gsub('{{([%w_]+)}}', function(var_name)
     local value = var_table[var_name]
     if value then
       return value

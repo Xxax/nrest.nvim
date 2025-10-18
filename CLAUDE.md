@@ -155,22 +155,32 @@ Customize `format_response()` in `ui.lua:148-172`
 **Syntax:**
 - Define: `@variableName = value`
 - Use: `{{variableName}}`
+- System env: `$VAR` or `${VAR}`
 - Works in: URLs, headers, body
 
 **Implementation (variables.lua):**
 - Parses `@name = value` lines
 - Loads from optional env_file
 - Substitutes `{{name}}` patterns with regex
+- Substitutes `$VAR` and `${VAR}` with system environment variables
+- Uses `vim.env` and `os.getenv()` for system vars
 - Buffer variables override env file variables
 
-**Variable merging priority (highest to lowest):**
-1. Variables defined in `.http` buffer
+**Variable types and priority (highest to lowest):**
+1. User-defined variables in `.http` buffer (`@var = value`)
 2. Variables from `env_file`
+3. System environment variables (`$VAR`, `${VAR}`)
+
+**Substitution order:**
+1. First: System environment variables (`$VAR`, `${VAR}`)
+2. Then: User-defined variables (`{{name}}`)
+This allows user vars to reference system vars
 
 **Usage in init.lua:**
 - Parse variables from buffer and env file
 - Merge with buffer vars taking precedence
 - Substitute in request before validation
+- System vars substituted directly from environment
 
 ## Commit Conventions
 

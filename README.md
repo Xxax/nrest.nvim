@@ -128,9 +128,29 @@ Authorization: {{token}}
 **Variable Features:**
 - Define with `@name = value`
 - Use with `{{name}}`
+- System environment variables: `$VAR` or `${VAR}`
 - Works in URLs, headers, and request bodies
 - Buffer variables override environment file variables
 - Load from external file (e.g., `.env.http`)
+
+**Variable Types:**
+1. **User-defined variables**: `@name = value` → use with `{{name}}`
+2. **System environment variables**: Use with `$VAR` or `${VAR}}`
+   - Examples: `$USER`, `$HOME`, `${API_TOKEN}`
+   - Read from your shell environment
+
+**System environment variable example:**
+```http
+# Set in shell: export API_TOKEN=secret123
+GET https://api.example.com/data
+Authorization: Bearer $API_TOKEN
+X-User: $USER
+
+{
+  "home": "${HOME}",
+  "shell": "$SHELL"
+}
+```
 
 **Using environment files:**
 ```lua

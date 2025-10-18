@@ -1,0 +1,36 @@
+# Example: Using Environment Variables
+
+# Define variables using @variableName = value
+@baseUrl = https://httpbin.org
+@authToken = Bearer my-secret-token
+@contentType = application/json
+
+### Simple GET with variable
+GET {{baseUrl}}/get
+
+### GET with query parameters and variables
+GET {{baseUrl}}/get?name=test&token={{authToken}}
+
+### POST with variables in headers and body
+POST {{baseUrl}}/post
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+  "apiUrl": "{{baseUrl}}",
+  "message": "Variables work in JSON body too!"
+}
+
+### PUT with variable substitution
+PUT {{baseUrl}}/put
+Content-Type: {{contentType}}
+
+{
+  "endpoint": "{{baseUrl}}/api/users",
+  "updated": true
+}
+
+### Variables in custom headers
+GET {{baseUrl}}/headers
+X-Custom-Header: {{authToken}}
+X-API-Base: {{baseUrl}}

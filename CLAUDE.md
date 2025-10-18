@@ -140,7 +140,8 @@ Customize `format_response()` in `ui.lua:148-172`
 **Currently implemented:**
 - `result_split_horizontal` - Split direction (default: false = vertical)
 - `skip_ssl_verification` - Pass `-k` to curl (default: false)
-- `timeout` - Request timeout in ms (default: 30000)
+- `timeout` - Request timeout in ms (default: 10000)
+- `env_file` - Path to environment file for variables (default: nil)
 - `highlight.enabled` - Enable syntax highlighting (default: true)
 - `result.show_*` - Control what's displayed in results
 - `keybindings.*` - Customize keymaps
@@ -148,6 +149,28 @@ Customize `format_response()` in `ui.lua:148-172`
 **Not implemented (in config but unused):**
 - `result_split_in_place` - Not implemented, should be removed or implemented
 - `highlight.timeout` - Not used, should be removed or implemented
+
+## Environment Variables
+
+**Syntax:**
+- Define: `@variableName = value`
+- Use: `{{variableName}}`
+- Works in: URLs, headers, body
+
+**Implementation (variables.lua):**
+- Parses `@name = value` lines
+- Loads from optional env_file
+- Substitutes `{{name}}` patterns with regex
+- Buffer variables override env file variables
+
+**Variable merging priority (highest to lowest):**
+1. Variables defined in `.http` buffer
+2. Variables from `env_file`
+
+**Usage in init.lua:**
+- Parse variables from buffer and env file
+- Merge with buffer vars taking precedence
+- Substitute in request before validation
 
 ## Commit Conventions
 

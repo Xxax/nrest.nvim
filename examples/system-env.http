@@ -20,8 +20,8 @@ X-Home: ${HOME}
 }
 
 ### Combining system vars and custom vars
-@apiKey = my-secret-key
-@endpoint = /api/v1
+@apiKey = $USER
+@endpoint = /get
 
 # Use {{endpoint}} for user-defined variable, $USER for system variable
 GET https://httpbin.org{{endpoint}}
@@ -38,7 +38,7 @@ X-Environment: $API_ENV
 Authorization: Bearer $API_TOKEN
 
 ### Mixed variable types
-@baseUrl = https://api.example.com
+@baseUrl = https://httpbin.org
 
 POST {{baseUrl}}/users
 Content-Type: application/json

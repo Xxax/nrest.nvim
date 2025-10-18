@@ -68,8 +68,8 @@ function M.parse_all_requests(lines)
   while i <= #lines do
     local line = lines[i]
 
-    -- Skip empty lines and comments outside of requests
-    if not current_request and (line:match('^%s*$') or line:match('^%s*#') or line:match('^%s*//')) then
+    -- Skip empty lines, comments, and variable definitions outside of requests
+    if not current_request and (line:match('^%s*$') or line:match('^%s*#') or line:match('^%s*//') or line:match('^@[%w_]+%s*=')) then
       i = i + 1
     -- Detect request separator (###)
     elseif line:match('^###') then

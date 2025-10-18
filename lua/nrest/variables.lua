@@ -15,11 +15,44 @@ function M.parse_variables(lines)
     if name and value then
       -- Trim whitespace from value
       value = value:match('^%s*(.-)%s*$')
+
+      -- Substitute system environment variables in the value
+      -- This allows @apiKey = $USER to work correctly
+      value = M.substitute_system_env(value)
+
       vars[name] = value
     end
   end
 
   return vars
+end
+
+-- Substitute only system environment variables
+-- Separate function to avoid circular dependency
+function M.substitute_system_env(text)
+  if not text then
+    return text
+  end
+
+  -- Replace $VAR or ${VAR} with system environment variables
+  local result = text:gsub('%$({?)([%w_]+)(}?)', function(open_brace, var_name, close_brace)
+    -- Validate matching braces
+    if (open_brace == '{' and close_brace ~= '}') or (open_brace == '' and close_brace == '}') then
+      -- Malformed, keep original
+      return '$' .. open_brace .. var_name .. close_brace
+    end
+
+    -- Get system environment variable
+    local env_value = vim.env[var_name] or os.getenv(var_name)
+    if env_value then
+      return env_value
+    else
+      -- Keep original if not found
+      return '$' .. open_brace .. var_name .. close_brace
+    end
+  end)
+
+  return result
 end
 
 -- Load variables from environment file
@@ -72,22 +105,7 @@ function M.substitute(text, vars)
   local var_table = vars or variables
 
   -- First, replace system environment variables: $VAR or ${VAR}
-  local result = text:gsub('%$({?)([%w_]+)(}?)', function(open_brace, var_name, close_brace)
-    -- Validate matching braces
-    if (open_brace == '{' and close_brace ~= '}') or (open_brace == '' and close_brace == '}') then
-      -- Malformed, keep original
-      return '$' .. open_brace .. var_name .. close_brace
-    end
-
-    -- Get system environment variable
-    local env_value = vim.env[var_name] or os.getenv(var_name)
-    if env_value then
-      return env_value
-    else
-      -- Keep original if not found
-      return '$' .. open_brace .. var_name .. close_brace
-    end
-  end)
+  local result = M.substitute_system_env(text)
 
   -- Then, replace {{variableName}} patterns with user-defined variables
   result = result:gsub('{{([%w_]+)}}', function(var_name)

@@ -89,6 +89,13 @@ function M.build_curl_command(request, config)
     table.insert(cmd, '-k')
   end
 
+  -- Add digest auth if present in request metadata
+  if request.digest_auth then
+    table.insert(cmd, '--digest')
+    table.insert(cmd, '-u')
+    table.insert(cmd, request.digest_auth.username .. ':' .. request.digest_auth.password)
+  end
+
   -- Add method
   table.insert(cmd, '-X')
   table.insert(cmd, request.method)

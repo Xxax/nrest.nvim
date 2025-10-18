@@ -11,6 +11,8 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 - 📊 Clean response display in split windows
 - 🔧 Configurable keybindings and behavior
 - 🔒 SSL certificate verification control
+- 🔐 Authentication presets (Basic, Bearer, API Key, Digest)
+- 🔑 Environment variable support (user-defined and system)
 - ✅ Request validation (method, URL scheme)
 - 🔄 Automatic redirect handling
 - 📦 Zero external dependencies (uses curl)
@@ -101,6 +103,70 @@ GET https://api.example.com/users
 GET https://api.example.com/posts
 ```
 
+### Authentication Presets
+
+nrest.nvim supports common authentication methods with simple directives:
+
+**Basic Authentication:**
+```http
+@auth basic username password
+
+GET https://api.example.com/protected
+```
+
+**Bearer Token Authentication:**
+```http
+@auth bearer your-token-here
+
+GET https://api.example.com/protected
+```
+
+**API Key Authentication:**
+```http
+@auth apikey X-API-Key your-api-key-here
+
+GET https://api.example.com/protected
+```
+
+**Digest Authentication:**
+```http
+@auth digest username password
+
+GET https://api.example.com/protected
+```
+
+**Authentication with Variables:**
+```http
+@token = my-secret-token
+@auth bearer {{token}}
+
+GET https://api.example.com/protected
+```
+
+**Authentication with System Environment Variables:**
+```http
+# Using system env vars directly in auth
+@auth bearer $API_TOKEN
+
+# Or combining with variables
+@myToken = Bearer $API_TOKEN
+@auth bearer {{myToken}}
+
+GET https://api.example.com/protected
+```
+
+**Supported Authentication Types:**
+- `basic` - HTTP Basic Authentication (username/password encoded in base64)
+- `bearer` - Bearer token (commonly used for JWT tokens)
+- `apikey` - Custom API key header (specify header name and value)
+- `digest` - HTTP Digest Authentication (uses curl's --digest flag)
+
+**Notes:**
+- Auth directives apply to ALL requests in the file (global scope)
+- Auth is applied before variables are substituted
+- For request-specific auth, use separate files or manual headers
+- Digest auth is handled by curl and supports standard digest challenges
+
 ### Environment Variables
 
 Define and use variables in your `.http` files:
@@ -190,6 +256,9 @@ require('nrest').setup({
   skip_ssl_verification = false,    -- Skip SSL certificate verification (curl -k)
   timeout = 10000,                  -- Request timeout in milliseconds (10 seconds)
 
+  -- Response formatting
+  format_response = true,           -- Format response body (JSON with jq)
+
   -- Environment variables
   env_file = nil,                   -- Path to environment file (e.g., '.env.http')
 
@@ -212,6 +281,27 @@ require('nrest').setup({
     run_request = '<leader>hr',              -- Run first request in file
     run_request_under_cursor = '<leader>hc', -- Run request under cursor
   },
+})
+```
+
+### Response Formatting
+
+nrest.nvim automatically formats JSON responses using `jq` when available:
+
+**Features:**
+- Automatically detects JSON responses (by Content-Type header or content)
+- Pretty-prints JSON with proper indentation
+- Falls back to raw response if jq is not available
+- Can be disabled with `format_response = false`
+
+**Requirements:**
+- `jq` must be installed and in PATH for JSON formatting
+
+**Example:**
+```lua
+-- Disable automatic formatting
+require('nrest').setup({
+  format_response = false,  -- Show raw responses
 })
 ```
 
@@ -268,6 +358,7 @@ All standard HTTP methods are supported:
 
 - **Neovim** >= 0.8.0 (for modern Lua APIs)
 - **curl** - Must be available in PATH for executing HTTP requests
+- **jq** (optional) - For JSON response formatting (pretty-printing)
 
 ## How It Works
 
@@ -288,15 +379,18 @@ All standard HTTP methods are supported:
 **Planned Features:**
 - [ ] Request/response history
 - [ ] File references (`< ./file.json`)
-- [ ] Authentication presets (Basic, Bearer, etc.)
-- [ ] Response body formatting (JSON pretty-print, XML)
+- [ ] XML response formatting
 - [ ] GraphQL support
 - [ ] WebSocket support
 - [ ] Import from Postman/Insomnia collections
 - [ ] Custom response handlers/hooks
+- [ ] Request-scoped authentication (per-request auth directives)
 
 **Recently Completed:**
+- [x] JSON response formatting with jq
+- [x] Authentication presets (Basic, Bearer, API Key, Digest)
 - [x] Environment variable support (`@variable = value`, `{{variable}}`)
+- [x] System environment variable support (`$VAR`, `${VAR}`)
 - [x] Environment file loading (`.env.http`)
 - [x] Request timeout implementation
 - [x] SSL certificate verification control

@@ -1,0 +1,148 @@
+### GitLab TTU Examples
+# Examples for https://gitlab.ttu.ch API
+
+# Setup: Create a Personal Access Token in GitLab
+# 1. Go to https://gitlab.ttu.ch/-/user_settings/personal_access_tokens
+# 2. Create a token with 'api' scope
+# 3. Set environment variable: export GITLAB_TOKEN=your-token-here
+# Or define it in .env.http: @GITLAB_TOKEN = your-token-here
+
+@baseUrl = https://gitlab.ttu.ch/api/v4
+@auth bearer $GITLAB_TOKEN
+
+### Get current user info
+GET {{baseUrl}}/user
+Accept: application/json
+
+### List your projects
+GET {{baseUrl}}/projects?membership=true&per_page=20
+Accept: application/json
+
+### Get specific project by ID
+# Replace PROJECT_ID with your actual project ID
+@projectId = 57
+GET {{baseUrl}}/projects/{{projectId}}
+Accept: application/json
+
+### List project issues
+GET {{baseUrl}}/projects/{{projectId}}/issues
+Accept: application/json
+
+### Create a new issue
+POST {{baseUrl}}/projects/{{projectId}}/issues
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "New issue created via nrest.nvim",
+  "description": "This is a test issue created using the GitLab API",
+  "labels": ["bug", "api"]
+}
+
+### Update an issue
+# Replace ISSUE_IID with the issue's internal ID
+@issueIid = 1
+PUT {{baseUrl}}/projects/{{projectId}}/issues/{{issueIid}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "state_event": "close",
+  "labels": ["resolved"]
+}
+
+### List merge requests
+GET {{baseUrl}}/projects/{{projectId}}/merge_requests?state=opened
+Accept: application/json
+
+### Create a merge request
+POST {{baseUrl}}/projects/{{projectId}}/merge_requests
+Content-Type: application/json
+Accept: application/json
+
+{
+  "source_branch": "feature-branch",
+  "target_branch": "main",
+  "title": "Feature: Add new functionality",
+  "description": "This MR adds new functionality to the project",
+  "remove_source_branch": true
+}
+
+### List project branches
+GET {{baseUrl}}/projects/{{projectId}}/repository/branches
+Accept: application/json
+
+### Get project's README
+GET {{baseUrl}}/projects/{{projectId}}/repository/files/README.md?ref=main
+Accept: application/json
+
+### List commits
+GET {{baseUrl}}/projects/{{projectId}}/repository/commits?per_page=10
+Accept: application/json
+
+### Get project statistics
+GET {{baseUrl}}/projects/{{projectId}}/statistics
+Accept: application/json
+
+### List project members
+GET {{baseUrl}}/projects/{{projectId}}/members
+Accept: application/json
+
+### Search projects
+@searchQuery = neovim
+GET {{baseUrl}}/projects?search={{searchQuery}}
+Accept: application/json
+
+### Get GitLab version
+GET {{baseUrl}}/version
+Accept: application/json
+
+### List groups
+GET {{baseUrl}}/groups?per_page=20
+Accept: application/json
+
+### Get group by ID
+@groupId = 456
+GET {{baseUrl}}/groups/{{groupId}}
+Accept: application/json
+
+### List group projects
+GET {{baseUrl}}/groups/{{groupId}}/projects
+Accept: application/json
+
+### Create a project snippet
+POST {{baseUrl}}/projects/{{projectId}}/snippets
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Example Code Snippet",
+  "file_name": "example.lua",
+  "content": "local M = {}\n\nfunction M.hello()\n  print('Hello from GitLab!')\nend\n\nreturn M",
+  "visibility": "private"
+}
+
+### List project pipelines
+GET {{baseUrl}}/projects/{{projectId}}/pipelines?per_page=10
+Accept: application/json
+
+### Get pipeline status
+@pipelineId = 789
+GET {{baseUrl}}/projects/{{projectId}}/pipelines/{{pipelineId}}
+Accept: application/json
+
+### List project CI/CD variables
+GET {{baseUrl}}/projects/{{projectId}}/variables
+Accept: application/json
+
+### Create a CI/CD variable
+POST {{baseUrl}}/projects/{{projectId}}/variables
+Content-Type: application/json
+Accept: application/json
+
+{
+  "key": "MY_VARIABLE",
+  "value": "my_secret_value",
+  "protected": false,
+  "masked": true
+}

@@ -170,15 +170,71 @@ function M.format_response(response, config)
     table.insert(lines, '## Body')
     table.insert(lines, '')
 
-    -- Split body into lines and remove CR characters
-    for line in response.body:gmatch('[^\n]+') do
+    -- Format body based on content type
+    local formatted_body = M.format_body(response.body, response.headers, config)
+
+    -- Split formatted body into lines and remove CR characters
+    for line in formatted_body:gmatch('([^\n]*)\n') do
       -- Remove carriage return characters (^M)
       line = line:gsub('\r', '')
       table.insert(lines, line)
     end
+
+    -- Handle last line if no trailing newline
+    if not formatted_body:match('\n$') then
+      local last_line = formatted_body:match('[^\n]+$')
+      if last_line then
+        table.insert(lines, last_line:gsub('\r', ''))
+      end
+    end
   end
 
   return lines
+end
+
+-- Format body based on content type
+function M.format_body(body, headers, config)
+  -- Check if formatting is enabled
+  if not config.format_response then
+    return body
+  end
+
+  -- Detect JSON content type
+  local content_type = headers['Content-Type'] or headers['content-type'] or ''
+  local is_json = content_type:match('application/json') or content_type:match('application/.*%+json')
+
+  -- Try to detect JSON by content if Content-Type is not set
+  if not is_json and body:match('^%s*[%[{]') then
+    is_json = true
+  end
+
+  -- Format JSON with jq if available
+  if is_json then
+    return M.format_json_with_jq(body)
+  end
+
+  return body
+end
+
+-- Format JSON using jq
+function M.format_json_with_jq(json_body)
+  -- Check if jq is available
+  local jq_available = vim.fn.executable('jq') == 1
+  if not jq_available then
+    return json_body
+  end
+
+  -- Use jq to format JSON
+  -- Using vim.fn.system to pipe JSON through jq
+  local formatted = vim.fn.system('jq .', json_body)
+
+  -- Check if jq succeeded (exit code 0)
+  if vim.v.shell_error == 0 then
+    return formatted
+  else
+    -- If jq failed, return original body
+    return json_body
+  end
 end
 
 -- Apply syntax highlighting to result buffer

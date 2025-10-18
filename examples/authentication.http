@@ -1,0 +1,86 @@
+### Authentication Examples
+# This file demonstrates various authentication methods supported by nrest.nvim
+
+### Example 1: Bearer Token Authentication
+# Syntax: @auth bearer <token>
+@auth bearer mytoken123
+
+GET https://httpbin.org/bearer
+Accept: application/json
+
+### Example 2: Basic Authentication
+# Syntax: @auth basic <username> <password>
+@auth basic myuser mypassword
+
+GET https://httpbin.org/basic-auth/myuser/mypassword
+Accept: application/json
+
+### Example 3: API Key Authentication
+# Syntax: @auth apikey <header-name> <api-key>
+@auth apikey X-API-Key secret123
+
+GET https://httpbin.org/get
+Accept: application/json
+
+### Example 4: Digest Authentication
+# Syntax: @auth digest <username> <password>
+@auth digest testuser testpass
+
+GET https://httpbin.org/digest-auth/auth/testuser/testpass
+Accept: application/json
+
+### Example 5: Bearer Token with Variables
+@token = my-secret-token-123
+@auth bearer {{token}}
+
+GET https://httpbin.org/bearer
+Accept: application/json
+
+### Example 6: Basic Auth with System Environment Variables
+# Set environment variables: export API_USER=myuser API_PASS=mypass
+@auth basic $API_USER $API_PASS
+
+GET https://httpbin.org/basic-auth/myuser/mypass
+Accept: application/json
+
+### Example 7: API Key from Environment Variable
+@apiKey = $MY_API_KEY
+@auth apikey X-API-Key {{apiKey}}
+
+GET https://httpbin.org/get
+Accept: application/json
+
+### Example 8: POST Request with Bearer Authentication
+@auth bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+
+POST https://httpbin.org/post
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com"
+}
+
+### Example 9: Multiple Headers with API Key Auth
+@auth apikey X-Custom-Auth-Token custom-secret-123
+
+GET https://httpbin.org/get
+Accept: application/json
+User-Agent: nrest.nvim
+X-Request-ID: 12345
+
+### Example 10: Bearer Token from Environment File
+# Create .env.http with: @AUTH_TOKEN = your-token-here
+# Configure in setup: env_file = '.env.http'
+@auth bearer {{AUTH_TOKEN}}
+
+GET https://api.github.com/user
+Accept: application/json
+
+### Test
+#
+@auth basic username password
+GET https://httpbin.org/get
+Accept: application/json
+User-Agent: nrest.nvim

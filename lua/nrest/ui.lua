@@ -3,7 +3,9 @@ local M = {}
 -- Store buffer reference (will be nil if buffer is deleted)
 local result_buffer = nil
 
--- Show HTTP response in a split window
+--- Show HTTP response in a split window
+--- @param response table Response object {success, status_line, headers, body, error}
+--- @param config table Plugin configuration
 function M.show_response(response, config)
   if not response.success then
     vim.notify('Request failed: ' .. (response.error or 'Unknown error'), vim.log.levels.ERROR)

@@ -8,13 +8,39 @@ local AUTH_TYPES = {
   digest = true,
 }
 
--- Parse authentication directive from lines (file-level, searches all lines)
--- Syntax: @auth <type> <params...>
--- Examples:
---   @auth basic username password
---   @auth bearer token123
---   @auth apikey X-API-Key mykey123
---   @auth digest username password
+-- Pure Lua Base64 encoding (no shell dependency, prevents injection)
+-- Based on: https://en.wikipedia.org/wiki/Base64
+local function base64_encode(data)
+  local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  return ((data:gsub('.', function(x)
+    local r, b_val = '', x:byte()
+    for i = 8, 1, -1 do
+      r = r .. (b_val % 2 ^ i - b_val % 2 ^ (i - 1) > 0 and '1' or '0')
+    end
+    return r
+  end) .. '0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+    if #x < 6 then
+      return ''
+    end
+    local c = 0
+    for i = 1, 6 do
+      c = c + (x:sub(i, i) == '1' and 2 ^ (6 - i) or 0)
+    end
+    return b:sub(c + 1, c + 1)
+  end) .. ({ '', '==', '=' })[#data % 3 + 1])
+end
+
+--- Parse authentication directive from buffer lines (file-level)
+--- Searches all lines for @auth directive
+--- Syntax: @auth <type> <params...>
+--- Examples:
+---   @auth basic username password
+---   @auth bearer token123
+---   @auth apikey X-API-Key mykey123
+---   @auth digest username password
+--- @param lines table Array of buffer lines
+--- @return table|nil config Auth configuration {type, params} or nil if not found
+--- @return string|nil error Error message if parsing fails
 function M.parse_auth(lines)
   for _, line in ipairs(lines) do
     local auth_line = line:match('^%s*@auth%s+(.+)')
@@ -43,13 +69,11 @@ function M.parse_auth(lines)
   return nil, nil -- No auth directive found
 end
 
--- Parse authentication directive from a single line (request-scoped)
--- Syntax: @auth <type> <params...>
--- Examples:
---   @auth basic username password
---   @auth bearer token123
---   @auth apikey X-API-Key mykey123
---   @auth digest username password
+--- Parse authentication directive from a single line (request-scoped)
+--- Syntax: @auth <type> <params...>
+--- @param line string|nil Line containing auth directive
+--- @return table|nil config Auth configuration {type, params} or nil if not found
+--- @return string|nil error Error message if parsing fails
 function M.parse_auth_line(line)
   if not line then
     return nil, nil
@@ -80,8 +104,12 @@ function M.parse_auth_line(line)
   }, nil
 end
 
--- Apply authentication to request
--- Modifies request.headers and returns error if validation fails
+--- Apply authentication to request
+--- Modifies request.headers or request.digest_auth based on auth type
+--- @param request table Request object to modify
+--- @param auth table|nil Auth configuration {type, params}
+--- @return boolean success True if authentication was applied successfully
+--- @return string|nil error Error message if application fails
 function M.apply_auth(request, auth)
   if not auth then
     return true, nil
@@ -110,9 +138,9 @@ function M._apply_basic_auth(request, params)
   local username = params[1]
   local password = params[2]
 
-  -- Encode credentials in base64
+  -- Encode credentials in base64 (using pure Lua to prevent shell injection)
   local credentials = username .. ':' .. password
-  local encoded = vim.fn.system('echo -n "' .. credentials .. '" | base64'):gsub('\n', '')
+  local encoded = base64_encode(credentials)
 
   request.headers['Authorization'] = 'Basic ' .. encoded
   return true, nil

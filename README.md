@@ -238,10 +238,27 @@ X-User: $USER
 
 **Using environment files:**
 ```lua
+-- Specific path
 require('nrest').setup({
-  env_file = '.env.http',  -- Load variables from file
+  env_file = '.env.http',  -- Load variables from file in current directory
+})
+
+-- Auto-discover .env.http in directory hierarchy
+require('nrest').setup({
+  env_file = 'auto',  -- Search for .env.http starting from buffer directory up to root
+})
+
+-- Absolute path
+require('nrest').setup({
+  env_file = vim.fn.getcwd() .. '/.env.http',  -- Project-specific env file
 })
 ```
+
+**Auto-discovery behavior:**
+- Starts searching from the directory of the current `.http` file
+- Walks up the directory tree until `.env.http` is found
+- Stops at the root directory if not found
+- Perfect for monorepos or nested project structures
 
 ## Configuration
 
@@ -260,7 +277,10 @@ require('nrest').setup({
   format_response = true,           -- Format response body (JSON with jq)
 
   -- Environment variables
-  env_file = nil,                   -- Path to environment file (e.g., '.env.http')
+  env_file = nil,                   -- Path to environment file
+                                    -- nil = disabled
+                                    -- 'auto' = auto-discover in directory hierarchy
+                                    -- 'path' = specific path (e.g., '.env.http')
 
   -- Syntax highlighting
   highlight = {
@@ -330,8 +350,14 @@ require('nrest').setup({
 
 **Load variables from environment file:**
 ```lua
+-- Auto-discover .env.http (recommended)
 require('nrest').setup({
-  env_file = vim.fn.getcwd() .. '/.env.http',  -- Project-specific env file
+  env_file = 'auto',  -- Searches up directory tree from current .http file
+})
+
+-- Specific path
+require('nrest').setup({
+  env_file = '.env.http',  -- Current working directory
 })
 ```
 

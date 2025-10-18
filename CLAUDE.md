@@ -92,10 +92,13 @@ ftplugin/
 **Variable Handling (variables.lua):**
 - Parses user-defined variables: `@name = value`
 - Loads variables from optional env file
+- **Auto-discovery**: When `env_file = 'auto'`, searches for `.env.http` from buffer directory up to root
+- Uses `vim.fn.expand('%:p:h')` to get buffer directory for auto-discovery
 - Substitutes system env vars: `$VAR` or `${VAR}` using `vim.env` and `os.getenv()`
 - Substitutes user vars: `{{name}}` using regex replacement
 - **Substitution order**: System env vars first, then user vars (allows user vars to reference system vars)
 - **Priority**: Buffer vars > env file vars > system env vars
+- **Search behavior**: Walks up directory tree max 20 iterations to prevent infinite loops
 
 **Request Execution (executor.lua):**
 - Uses `vim.fn.jobstart()` for async execution
@@ -186,6 +189,9 @@ Customize `format_response()` in `ui.lua:148-172`
 - `timeout` - Request timeout in ms (default: 10000)
 - `format_response` - Format JSON with jq (default: true)
 - `env_file` - Path to environment file for variables (default: nil)
+  - `nil` - Disabled
+  - `'auto'` - Auto-discover .env.http in directory hierarchy
+  - `'path'` - Specific file path
 - `highlight.enabled` - Enable syntax highlighting (default: true)
 - `result.show_*` - Control what's displayed in results
 - `keybindings.*` - Customize keymaps

@@ -1,0 +1,63 @@
+### Simple GET request
+GET https://api.github.com/users/github
+
+### GET request with headers
+GET https://api.github.com/repos/neovim/neovim
+Accept: application/json
+User-Agent: nrest.nvim
+
+### POST request with JSON body
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "age": 30
+}
+
+### PUT request
+PUT https://httpbin.org/put
+Content-Type: application/json
+
+{
+  "id": 123,
+  "status": "updated"
+}
+
+### DELETE request
+DELETE https://httpbin.org/delete
+
+### Request with authentication
+GET https://api.github.com/user
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### POST with form data
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+
+name=John+Doe&email=john@example.com
+
+### GET with query parameters (in URL)
+GET https://httpbin.org/get?param1=value1&param2=value2
+
+### Complex JSON POST
+POST https://httpbin.org/post
+Content-Type: application/json
+Accept: application/json
+
+{
+  "user": {
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "address": {
+      "street": "123 Main St",
+      "city": "Springfield",
+      "country": "USA"
+    }
+  },
+  "items": [
+    {"id": 1, "name": "Item 1"},
+    {"id": 2, "name": "Item 2"}
+  ]
+}

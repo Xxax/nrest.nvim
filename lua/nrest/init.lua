@@ -1,0 +1,85 @@
+local M = {}
+
+-- Plugin configuration
+M.config = {
+  -- Default configuration
+  result_split_horizontal = false,
+  result_split_in_place = false,
+  skip_ssl_verification = false,
+  highlight = {
+    enabled = true,
+    timeout = 150,
+  },
+  result = {
+    show_url = true,
+    show_http_info = true,
+    show_headers = true,
+    show_body = true,
+  },
+  -- Custom keybindings
+  keybindings = {
+    run_request = '<leader>hr',
+    run_request_under_cursor = '<leader>hc',
+  },
+}
+
+-- Setup function to configure the plugin
+function M.setup(opts)
+  M.config = vim.tbl_deep_extend('force', M.config, opts or {})
+
+  -- Create autocommands for .http files
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'http',
+    callback = function()
+      require('nrest.keymaps').setup_buffer_keymaps()
+    end,
+  })
+end
+
+-- Main function to run HTTP request
+function M.run()
+  local parser = require('nrest.parser')
+  local executor = require('nrest.executor')
+  local ui = require('nrest.ui')
+
+  -- Get current buffer content
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+  -- Parse HTTP request
+  local request = parser.parse_request(lines)
+
+  if not request then
+    vim.notify('No valid HTTP request found', vim.log.levels.ERROR)
+    return
+  end
+
+  -- Execute request
+  vim.notify('Executing request...', vim.log.levels.INFO)
+  executor.execute(request, function(response)
+    ui.show_response(response, M.config)
+  end)
+end
+
+-- Run request under cursor
+function M.run_at_cursor()
+  local parser = require('nrest.parser')
+  local executor = require('nrest.executor')
+  local ui = require('nrest.ui')
+
+  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+  local request = parser.parse_request_at_line(lines, cursor_line)
+
+  if not request then
+    vim.notify('No valid HTTP request found at cursor', vim.log.levels.ERROR)
+    return
+  end
+
+  vim.notify('Executing request...', vim.log.levels.INFO)
+  executor.execute(request, function(response)
+    ui.show_response(response, M.config)
+  end)
+end
+
+return M

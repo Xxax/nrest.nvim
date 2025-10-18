@@ -135,9 +135,14 @@ Authorization: {{token}}
 
 **Variable Types:**
 1. **User-defined variables**: `@name = value` → use with `{{name}}`
-2. **System environment variables**: Use with `$VAR` or `${VAR}}`
+   - Defined in `.http` file or `.env.http`
+   - Always use double curly braces: `{{variableName}}`
+2. **System environment variables**: Use with `$VAR` or `${VAR}`
    - Examples: `$USER`, `$HOME`, `${API_TOKEN}`
    - Read from your shell environment
+   - Use dollar sign syntax
+
+**Important:** Don't mix syntaxes! Use `{{var}}` for user-defined, `$VAR` for system env.
 
 **System environment variable example:**
 ```http

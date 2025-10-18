@@ -31,6 +31,7 @@ cache:
     - nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
   tags:
     - docker
+    - linux
 
 # Test on stable Neovim (from Alpine packages)
 test:neovim-stable:
@@ -82,6 +83,7 @@ lint:luacheck:
     - merge_requests
   tags:
     - docker
+    - linux
   allow_failure: true  # Don't block on linting issues
 
 # Optional: Check health (requires full Neovim setup)
@@ -99,17 +101,5 @@ check:health:
     - merge_requests
   tags:
     - docker
+    - linux
   allow_failure: true
-
-# Success notification (optional)
-pages:
-  stage: test
-  script:
-    - mkdir -p public
-    - echo "nrest.nvim tests passed!" > public/index.html
-  artifacts:
-    paths:
-      - public
-  only:
-    - main
-  when: on_success

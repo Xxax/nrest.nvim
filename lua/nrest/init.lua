@@ -17,6 +17,8 @@ M.config = {
     show_headers = true,
     show_body = true,
   },
+  -- Response formatting
+  format_response = true, -- Format response body (JSON with jq, etc.)
   -- Environment variables
   env_file = nil, -- Optional path to environment file (e.g., '.env.http')
   -- Custom keybindings
@@ -45,6 +47,7 @@ function M.run()
   local executor = require('nrest.executor')
   local ui = require('nrest.ui')
   local variables = require('nrest.variables')
+  local auth = require('nrest.auth')
 
   -- Get current buffer content
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
@@ -72,6 +75,28 @@ function M.run()
   -- Substitute variables in request
   request = variables.substitute_request(request, all_vars)
 
+  -- Parse and apply authentication
+  local auth_config, auth_error = auth.parse_auth(lines)
+  if auth_error then
+    vim.notify('Auth error: ' .. auth_error, vim.log.levels.ERROR)
+    return
+  end
+
+  if auth_config then
+    -- Substitute variables in auth parameters
+    if auth_config.params then
+      for i, param in ipairs(auth_config.params) do
+        auth_config.params[i] = variables.substitute(param, all_vars)
+      end
+    end
+
+    local auth_ok, auth_apply_error = auth.apply_auth(request, auth_config)
+    if not auth_ok then
+      vim.notify('Auth error: ' .. auth_apply_error, vim.log.levels.ERROR)
+      return
+    end
+  end
+
   -- Validate request
   local valid, error_msg = parser.validate_request(request)
   if not valid then
@@ -92,6 +117,7 @@ function M.run_at_cursor()
   local executor = require('nrest.executor')
   local ui = require('nrest.ui')
   local variables = require('nrest.variables')
+  local auth = require('nrest.auth')
 
   local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
@@ -117,6 +143,28 @@ function M.run_at_cursor()
 
   -- Substitute variables in request
   request = variables.substitute_request(request, all_vars)
+
+  -- Parse and apply authentication
+  local auth_config, auth_error = auth.parse_auth(lines)
+  if auth_error then
+    vim.notify('Auth error: ' .. auth_error, vim.log.levels.ERROR)
+    return
+  end
+
+  if auth_config then
+    -- Substitute variables in auth parameters
+    if auth_config.params then
+      for i, param in ipairs(auth_config.params) do
+        auth_config.params[i] = variables.substitute(param, all_vars)
+      end
+    end
+
+    local auth_ok, auth_apply_error = auth.apply_auth(request, auth_config)
+    if not auth_ok then
+      vim.notify('Auth error: ' .. auth_apply_error, vim.log.levels.ERROR)
+      return
+    end
+  end
 
   -- Validate request
   local valid, error_msg = parser.validate_request(request)

@@ -39,6 +39,8 @@ lua/nrest/
 ├── parser.lua    - Parses .http files into request objects
 ├── executor.lua  - Executes HTTP requests via curl (async with jobstart)
 ├── ui.lua        - Manages result buffer and split windows
+├── auth.lua      - Authentication preset handling (Basic, Bearer, API Key, Digest)
+├── variables.lua - Variable parsing and substitution (user-defined and system env vars)
 └── keymaps.lua   - Buffer-local keymap setup
 
 plugin/
@@ -54,12 +56,15 @@ ftplugin/
 ### Data Flow
 
 1. User triggers `:NrestRun` or `:NrestRunCursor` (or keybindings)
-2. **init.lua** gets buffer content and calls **parser.lua**
-3. **parser.lua** extracts HTTP method, URL, headers, body from .http file
-4. **init.lua** validates request (method, URL scheme)
-5. **executor.lua** builds curl command and executes asynchronously
-6. **executor.lua** parses curl response (handles redirects, finds final status)
-7. **ui.lua** creates/reuses result buffer and displays response in split
+2. **init.lua** gets buffer content
+3. **variables.lua** parses variables from buffer and env file
+4. **parser.lua** extracts HTTP method, URL, headers, body from .http file
+5. **variables.lua** substitutes variables in request (system env vars first, then user vars)
+6. **auth.lua** parses auth directive and applies authentication to request
+7. **init.lua** validates request (method, URL scheme)
+8. **executor.lua** builds curl command (including digest auth if needed) and executes asynchronously
+9. **executor.lua** parses curl response (handles redirects, finds final status)
+10. **ui.lua** creates/reuses result buffer and displays response in split
 
 ### Key Implementation Details
 
@@ -69,13 +74,45 @@ ftplugin/
 - Extracts headers: `Header-Name: value`
 - Body starts after empty line, ends at next request/separator
 - Tracks line ranges for cursor-based execution
+- Skips auth directives (`@auth`) and variable definitions (`@var =`) during parsing
+
+**Authentication (auth.lua):**
+- Parses auth directives: `@auth <type> <params...>`
+- Supported types: `basic`, `bearer`, `apikey`, `digest`
+- **Basic Auth**: Encodes username:password in base64, adds `Authorization: Basic <encoded>` header
+- **Bearer Token**: Adds `Authorization: Bearer <token>` header
+- **API Key**: Adds custom header with specified name and value
+- **Digest Auth**: Sets metadata in request for executor to use curl's `--digest` flag
+- Auth is applied globally to all requests in the file (file-level scope)
+- **Variable substitution in auth**: Auth parameters are substituted in init.lua before applying auth
+  - System env vars: `@auth bearer $GITLAB_TOKEN`
+  - User vars: `@auth bearer {{myToken}}`
+  - Substitution happens after variable parsing, before auth application
+
+**Variable Handling (variables.lua):**
+- Parses user-defined variables: `@name = value`
+- Loads variables from optional env file
+- Substitutes system env vars: `$VAR` or `${VAR}` using `vim.env` and `os.getenv()`
+- Substitutes user vars: `{{name}}` using regex replacement
+- **Substitution order**: System env vars first, then user vars (allows user vars to reference system vars)
+- **Priority**: Buffer vars > env file vars > system env vars
 
 **Request Execution (executor.lua):**
 - Uses `vim.fn.jobstart()` for async execution
 - Builds curl command: `-i` (include headers), `-s` (silent), `-L` (follow redirects)
 - Supports SSL verification skip with `-k` flag
+- Adds digest auth with `--digest -u user:pass` when `request.digest_auth` is set
 - Implements timeout using `vim.fn.timer_start()` + `jobstop()`
 - Parses response by finding last HTTP status line (handles redirects)
+- URL-encodes query parameters to handle spaces and special characters
+
+**Response Formatting (ui.lua):**
+- Detects JSON responses by Content-Type header or content inspection
+- Formats JSON with `jq` if available (via `vim.fn.system()`)
+- Falls back to raw response if jq is not installed or formatting fails
+- Can be disabled with `format_response = false` config option
+- Uses `vim.v.shell_error` to check jq exit code
+- Handles both `Content-Type: application/json` and `application/*+json` patterns
 
 **Buffer Management (ui.lua):**
 - Caches result buffer in module-local variable
@@ -86,7 +123,7 @@ ftplugin/
 
 **Configuration Flow:**
 - Config defined in init.lua with defaults
-- Passed to executor (for SSL, timeout) and ui (for display options)
+- Passed to executor (for SSL, timeout, digest auth) and ui (for display options, formatting)
 - Merged via `vim.tbl_deep_extend()` in setup()
 
 ## Testing the Plugin
@@ -107,6 +144,12 @@ ftplugin/
 - Timeout: Set `timeout = 5000` and test with slow endpoint
 - Redirects: Test with URL that redirects (e.g., http → https)
 - Multiple requests: Use `###` separators, test cursor positioning
+- **Auth testing**:
+  - Basic: Test with `https://httpbin.org/basic-auth/user/pass`
+  - Bearer: Test with `https://httpbin.org/bearer`
+  - API Key: Test with custom header on any endpoint
+  - Digest: Test with `https://httpbin.org/digest-auth/auth/user/pass`
+  - Variables in auth: Use `@auth bearer {{token}}` with `@token = test123`
 
 ## Known Issues & Workarounds
 
@@ -141,6 +184,7 @@ Customize `format_response()` in `ui.lua:148-172`
 - `result_split_horizontal` - Split direction (default: false = vertical)
 - `skip_ssl_verification` - Pass `-k` to curl (default: false)
 - `timeout` - Request timeout in ms (default: 10000)
+- `format_response` - Format JSON with jq (default: true)
 - `env_file` - Path to environment file for variables (default: nil)
 - `highlight.enabled` - Enable syntax highlighting (default: true)
 - `result.show_*` - Control what's displayed in results

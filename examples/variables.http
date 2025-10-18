@@ -9,7 +9,8 @@
 GET {{baseUrl}}/get
 
 ### GET with query parameters and variables
-GET {{baseUrl}}/get?name=test&token={{authToken}}
+# Note: Don't use Bearer tokens in URLs - use Authorization header instead
+GET {{baseUrl}}/get?name=test&version=v1
 
 ### POST with variables in headers and body
 POST {{baseUrl}}/post

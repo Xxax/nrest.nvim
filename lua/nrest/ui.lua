@@ -170,8 +170,10 @@ function M.format_response(response, config)
     table.insert(lines, '## Body')
     table.insert(lines, '')
 
-    -- Split body into lines
+    -- Split body into lines and remove CR characters
     for line in response.body:gmatch('[^\n]+') do
+      -- Remove carriage return characters (^M)
+      line = line:gsub('\r', '')
       table.insert(lines, line)
     end
   end

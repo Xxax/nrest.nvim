@@ -1,5 +1,25 @@
 local M = {}
 
+-- URL encode special characters in query string
+-- Only encodes the query part (after ?) to preserve the base URL structure
+local function url_encode_query(url)
+  -- Split URL at the first '?'
+  local base, query = url:match('^([^?]+)%?(.+)$')
+
+  if not query then
+    -- No query string, return as-is
+    return url
+  end
+
+  -- Encode special characters in the query string
+  -- Encode spaces and other characters that curl doesn't handle well
+  local encoded_query = query:gsub('([^%w%-%.%_%~%=%&])', function(c)
+    return string.format('%%%02X', string.byte(c))
+  end)
+
+  return base .. '?' .. encoded_query
+end
+
 -- Execute HTTP request using curl
 function M.execute(request, callback, config)
   local curl_cmd = M.build_curl_command(request, config)
@@ -85,8 +105,12 @@ function M.build_curl_command(request, config)
     table.insert(cmd, request.body)
   end
 
-  -- Add URL
-  table.insert(cmd, request.url)
+  -- Add --globoff to prevent curl from interpreting brackets/braces
+  table.insert(cmd, '--globoff')
+
+  -- URL-encode query parameters to handle spaces and special characters
+  local encoded_url = url_encode_query(request.url)
+  table.insert(cmd, encoded_url)
 
   return cmd
 end
@@ -117,7 +141,8 @@ function M.parse_curl_response(lines)
 
   -- Parse status line
   if i <= #lines then
-    response.status_line = lines[i]
+    -- Remove CR characters from status line
+    response.status_line = lines[i]:gsub('\r', '')
     local status_code = lines[i]:match('HTTP/%S+%s+(%d+)')
     if status_code then
       response.status_code = tonumber(status_code)
@@ -127,7 +152,7 @@ function M.parse_curl_response(lines)
 
   -- Parse headers
   while i <= #lines do
-    local line = lines[i]
+    local line = lines[i]:gsub('\r', '')  -- Remove CR from header lines
     if line:match('^%s*$') then
       -- Empty line marks end of headers
       i = i + 1
@@ -144,7 +169,9 @@ function M.parse_curl_response(lines)
   -- Parse body
   local body_lines = {}
   while i <= #lines do
-    table.insert(body_lines, lines[i])
+    -- Remove CR characters from body lines
+    local clean_line = lines[i]:gsub('\r', '')
+    table.insert(body_lines, clean_line)
     i = i + 1
   end
   response.body = table.concat(body_lines, '\n')

@@ -92,19 +92,33 @@ function M.parse_all_requests(lines)
         url = url:gsub('%s+HTTP/.*$', ''),
         headers = {},
         body = nil,
+        auth = nil, -- Per-request auth directive
         start_line = i,
         end_line = i,
       }
       i = i + 1
 
-      -- Parse headers
-      while i <= #lines and lines[i]:match('^%s*[%w%-]+%s*:%s*.+') do
-        local key, value = lines[i]:match('^%s*([%w%-]+)%s*:%s*(.+)')
-        if key and value then
-          current_request.headers[key] = value
+      -- Parse auth directive and headers
+      while i <= #lines do
+        local current_line = lines[i]
+
+        -- Check for auth directive
+        if current_line:match('^%s*@auth%s+') then
+          current_request.auth_line = current_line
+          current_request.end_line = i
+          i = i + 1
+        -- Check for header
+        elseif current_line:match('^%s*[%w%-]+%s*:%s*.+') then
+          local key, value = current_line:match('^%s*([%w%-]+)%s*:%s*(.+)')
+          if key and value then
+            current_request.headers[key] = value
+          end
+          current_request.end_line = i
+          i = i + 1
+        else
+          -- No more auth directives or headers
+          break
         end
-        current_request.end_line = i
-        i = i + 1
       end
 
       -- Skip empty line between headers and body

@@ -123,6 +123,10 @@ ftplugin/
 - Sets `eventignore = 'all'` during split creation to avoid autocmd conflicts
 - Clears cache on BufDelete event
 - Buffer options: `buftype=nofile`, `buflisted=false`, `bufhidden=hide`
+- **Folding**: Uses marker-based folding (`{{{`, `}}}`) for headers section
+  - `foldmethod=marker` for efficient folding
+  - `foldlevel=0` to start with headers folded
+  - Configurable via `result.folding` option
 
 **Configuration Flow:**
 - Config defined in init.lua with defaults

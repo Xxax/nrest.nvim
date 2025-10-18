@@ -16,6 +16,7 @@ M.config = {
     show_http_info = true,
     show_headers = true,
     show_body = true,
+    folding = true, -- Enable folding for headers section
   },
   -- Response formatting
   format_response = true, -- Format response body (JSON with jq, etc.)

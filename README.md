@@ -137,12 +137,25 @@ Authorization: {{token}}
 1. **User-defined variables**: `@name = value` → use with `{{name}}`
    - Defined in `.http` file or `.env.http`
    - Always use double curly braces: `{{variableName}}`
+   - Can reference system env vars: `@token = Bearer $USER`
 2. **System environment variables**: Use with `$VAR` or `${VAR}`
    - Examples: `$USER`, `$HOME`, `${API_TOKEN}`
    - Read from your shell environment
    - Use dollar sign syntax
+   - Substituted when parsing variable definitions
 
 **Important:** Don't mix syntaxes! Use `{{var}}` for user-defined, `$VAR` for system env.
+
+**Combining variables:**
+```http
+# User variable can reference system env
+@apiKey = Bearer $USER
+@dataPath = ${HOME}/api-data
+
+GET https://api.example.com/data
+Authorization: {{apiKey}}
+X-Path: {{dataPath}}
+```
 
 **System environment variable example:**
 ```http

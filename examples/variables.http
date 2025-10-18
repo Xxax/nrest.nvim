@@ -34,3 +34,11 @@ Content-Type: {{contentType}}
 GET {{baseUrl}}/headers
 X-Custom-Header: {{authToken}}
 X-API-Base: {{baseUrl}}
+
+### Variables can reference system environment variables
+@userToken = Bearer $USER
+@homePath = ${HOME}/data
+
+GET {{baseUrl}}/user
+Authorization: {{userToken}}
+X-Data-Path: {{homePath}}

@@ -20,7 +20,10 @@ local function url_encode_query(url)
   return base .. '?' .. encoded_query
 end
 
--- Execute HTTP request using curl
+--- Execute HTTP request asynchronously using curl
+--- @param request table Request object with method, url, headers, body
+--- @param callback function Callback function(response) called on completion
+--- @param config table Plugin configuration
 function M.execute(request, callback, config)
   local curl_cmd = M.build_curl_command(request, config)
 
@@ -28,6 +31,15 @@ function M.execute(request, callback, config)
   local stderr_data = {}
   local timeout_timer = nil
   local job_id = nil
+  local callback_called = false
+
+  -- Safe callback wrapper to prevent double invocation (race condition between timeout and on_exit)
+  local function safe_callback(result)
+    if not callback_called then
+      callback_called = true
+      callback(result)
+    end
+  end
 
   -- Execute curl command asynchronously
   job_id = vim.fn.jobstart(curl_cmd, {
@@ -49,7 +61,7 @@ function M.execute(request, callback, config)
 
       if exit_code ~= 0 then
         local error_msg = table.concat(stderr_data, '\n')
-        callback({
+        safe_callback({
           success = false,
           error = 'Request failed with exit code: ' .. exit_code .. '\n' .. error_msg,
         })
@@ -60,7 +72,7 @@ function M.execute(request, callback, config)
       local response = M.parse_curl_response(stdout_data)
       response.success = true
 
-      callback(response)
+      safe_callback(response)
     end,
     stdout_buffered = true,
     stderr_buffered = true,
@@ -71,7 +83,7 @@ function M.execute(request, callback, config)
     timeout_timer = vim.fn.timer_start(config.timeout, function()
       if job_id and vim.fn.jobwait({job_id}, 0)[1] == -1 then
         vim.fn.jobstop(job_id)
-        callback({
+        safe_callback({
           success = false,
           error = 'Request timeout after ' .. config.timeout .. 'ms',
         })
@@ -80,7 +92,19 @@ function M.execute(request, callback, config)
   end
 end
 
--- Build curl command from request
+-- Validate header value to prevent command injection
+local function validate_header_value(value)
+  -- Headers must not contain newlines or carriage returns
+  if value:match('[\r\n]') then
+    return false, 'Header value contains invalid characters (newline)'
+  end
+  return true
+end
+
+--- Build curl command arguments from request
+--- @param request table Request object
+--- @param config table Plugin configuration
+--- @return table cmd Array of command arguments for vim.fn.jobstart
 function M.build_curl_command(request, config)
   local cmd = { 'curl', '-i', '-s', '-L' }
 
@@ -100,10 +124,16 @@ function M.build_curl_command(request, config)
   table.insert(cmd, '-X')
   table.insert(cmd, request.method)
 
-  -- Add headers
+  -- Add headers with validation
   for key, value in pairs(request.headers) do
-    table.insert(cmd, '-H')
-    table.insert(cmd, key .. ': ' .. value)
+    local valid, err = validate_header_value(value)
+    if not valid then
+      vim.notify('Invalid header "' .. key .. '": ' .. err, vim.log.levels.WARN)
+      -- Skip invalid header instead of failing entire request
+    else
+      table.insert(cmd, '-H')
+      table.insert(cmd, key .. ': ' .. value)
+    end
   end
 
   -- Add body if present
@@ -122,8 +152,10 @@ function M.build_curl_command(request, config)
   return cmd
 end
 
--- Parse curl response (with headers)
--- Handles redirects by parsing only the final response
+--- Parse curl response (with headers)
+--- Handles redirects by parsing only the final response
+--- @param lines table Array of response lines from curl
+--- @return table response Parsed response {status_line, status_code, headers, body}
 function M.parse_curl_response(lines)
   local response = {
     status_line = '',

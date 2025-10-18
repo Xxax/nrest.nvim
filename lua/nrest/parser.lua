@@ -13,7 +13,10 @@ local VALID_METHODS = {
   TRACE = true,
 }
 
--- Validate HTTP request
+--- Validate HTTP request structure and content
+--- @param request table|nil The request object to validate
+--- @return boolean valid True if request is valid
+--- @return string|nil error Error message if validation fails
 function M.validate_request(request)
   if not request then
     return false, 'Request is nil'
@@ -37,7 +40,16 @@ function M.validate_request(request)
   return true, nil
 end
 
--- Parse HTTP request from lines
+--- Parse the first HTTP request from buffer lines
+--- @param lines table Array of buffer lines
+--- @return table|nil request Parsed request object or nil if no request found
+--- @field method string HTTP method (GET, POST, etc.)
+--- @field url string Request URL
+--- @field headers table<string, string> Request headers
+--- @field body string|nil Request body
+--- @field auth_line string|nil Auth directive line if present
+--- @field start_line number Starting line number
+--- @field end_line number Ending line number
 function M.parse_request(lines)
   local requests = M.parse_all_requests(lines)
   if #requests > 0 then
@@ -46,7 +58,10 @@ function M.parse_request(lines)
   return nil
 end
 
--- Parse HTTP request at specific line
+--- Parse HTTP request at a specific cursor line
+--- @param lines table Array of buffer lines
+--- @param cursor_line number Current cursor line number
+--- @return table|nil request Request object at cursor position or nil if not found
 function M.parse_request_at_line(lines, cursor_line)
   local requests = M.parse_all_requests(lines)
 
@@ -59,7 +74,9 @@ function M.parse_request_at_line(lines, cursor_line)
   return nil
 end
 
--- Parse all HTTP requests in the buffer
+--- Parse all HTTP requests in the buffer
+--- @param lines table Array of buffer lines
+--- @return table requests Array of parsed request objects
 function M.parse_all_requests(lines)
   local requests = {}
   local current_request = nil

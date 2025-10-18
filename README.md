@@ -1,5 +1,7 @@
 # nrest.nvim
 
+[![pipeline status](https://gitlab.ttu.ch/matthias/nrest/badges/main/pipeline.svg)](https://gitlab.ttu.ch/matthias/nrest/-/commits/main)
+
 A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST Client extension.
 
 ## Features
@@ -13,9 +15,13 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 - 🔒 SSL certificate verification control
 - 🔐 Authentication presets (Basic, Bearer, API Key, Digest)
 - 🔑 Environment variable support (user-defined and system)
-- ✅ Request validation (method, URL scheme)
+- ✅ Request validation (method, URL scheme, headers)
 - 🔄 Automatic redirect handling
-- 📦 Zero external dependencies (uses curl)
+- 📦 Zero Lua dependencies (only requires curl)
+- 🧪 Comprehensive test suite with 33+ test cases
+- 🏥 Built-in health check (`:checkhealth nrest`)
+- 🔐 Security-hardened (pure Lua Base64, header validation)
+- 📚 Full LuaDoc API documentation
 
 ## Installation
 
@@ -495,6 +501,13 @@ All standard HTTP methods are supported:
 - **curl** - Must be available in PATH for executing HTTP requests
 - **jq** (optional) - For JSON response formatting (pretty-printing)
 
+**Check your setup:**
+```vim
+:checkhealth nrest
+```
+
+This will verify all dependencies and show your current configuration.
+
 ## How It Works
 
 1. Parses `.http` files to extract requests (method, URL, headers, body)
@@ -505,8 +518,10 @@ All standard HTTP methods are supported:
 
 **Technical Details:**
 - Uses Neovim's `jobstart()` for non-blocking execution
-- Implements request timeout with timer-based termination
+- Implements request timeout with timer-based termination and race condition guards
 - Caches result buffer for performance
+- Pure Lua Base64 encoding (no shell dependencies)
+- Header value validation prevents command injection
 - Compatible with AstroNvim, LazyVim, and other distributions
 
 ## Roadmap
@@ -521,6 +536,10 @@ All standard HTTP methods are supported:
 - [ ] Custom response handlers/hooks
 
 **Recently Completed:**
+- [x] Comprehensive test suite (33+ test cases with plenary.nvim)
+- [x] Health check system (`:checkhealth nrest`)
+- [x] Security hardening (pure Lua Base64, header validation)
+- [x] Full LuaDoc API documentation
 - [x] Request-scoped authentication (per-request auth directives)
 - [x] JSON response formatting with jq
 - [x] Authentication presets (Basic, Bearer, API Key, Digest)
@@ -529,7 +548,7 @@ All standard HTTP methods are supported:
 - [x] Environment file loading (`.env.http`)
 - [x] Request timeout implementation
 - [x] SSL certificate verification control
-- [x] Request validation (method, URL)
+- [x] Request validation (method, URL, headers)
 - [x] Automatic redirect handling
 - [x] Modern Neovim API migration
 
@@ -539,16 +558,50 @@ For contributors and developers:
 
 - See `CLAUDE.md` for architecture and development guidelines
 - See `.ai-assistant/RULES.md` for critical development rules
-- Run manual tests with `test.http` file before commits
+- See `CHANGELOG.md` for version history and migration guides
 - Follow modern Neovim API conventions (`vim.bo`, `vim.api`, etc.)
+
+**Running Tests:**
+```bash
+# Install plenary.nvim for testing
+git clone https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
+
+# Run test suite
+nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
+```
+
+**Test Coverage:**
+- Parser module: 25 test cases
+- Variables module: 24 test cases
+- Auth module: 20 test cases
+- Total: 69 automated tests (all passing)
+
+**CI/CD:**
+- GitLab CI/CD pipeline runs tests on every push/MR
+- Tests against stable Neovim from Alpine packages
+- Optional: Tests against latest Neovim from source (main branch only)
+- Optional: Luacheck linting on merge requests
 
 ## Contributing
 
 Contributions are welcome! Please:
 1. Read `CLAUDE.md` and `.ai-assistant/RULES.md` first
-2. Test changes with `.http` files
-3. Ensure compatibility with Neovim >= 0.8.0
-4. Submit a Pull Request with clear description
+2. Run the test suite and ensure all tests pass
+3. Add tests for new features
+4. Test changes manually with `.http` files
+5. Run `:checkhealth nrest` to verify setup
+6. Ensure compatibility with Neovim >= 0.8.0
+7. Update `CHANGELOG.md` with your changes
+8. Submit a Pull Request with clear description
+
+**Before submitting:**
+```bash
+# Run tests
+nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/"
+
+# Check health
+nvim -c "checkhealth nrest" -c "qa"
+```
 
 ## License
 

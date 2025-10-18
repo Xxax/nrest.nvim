@@ -1,0 +1,25 @@
+# Simplified GitLab CI/CD Pipeline for nrest.nvim
+# Use this if you want faster builds with just the essential test
+
+image: alpine:latest
+
+stages:
+  - test
+
+test:
+  stage: test
+  before_script:
+    # Install Neovim and git
+    - apk add --no-cache git neovim
+    # Install plenary.nvim for testing
+    - mkdir -p ~/.local/share/nvim/site/pack/vendor/start
+    - git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
+  script:
+    # Show Neovim version
+    - nvim --version
+    # Run test suite
+    - nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
+  only:
+    - branches
+    - merge_requests
+    - tags

@@ -4,8 +4,10 @@ local M = {}
 -- Structure: { variable_name = value }
 local variables = {}
 
--- Parse variable definitions from lines
--- Format: @variableName = value
+--- Parse variable definitions from buffer lines
+--- Format: @variableName = value
+--- @param lines table Array of buffer lines
+--- @return table variables Dictionary of parsed variables {name = value}
 function M.parse_variables(lines)
   local vars = {}
 
@@ -27,8 +29,10 @@ function M.parse_variables(lines)
   return vars
 end
 
--- Substitute only system environment variables
--- Separate function to avoid circular dependency
+--- Substitute only system environment variables in text
+--- Replaces $VAR and ${VAR} with values from vim.env or os.getenv()
+--- @param text string|nil Text to substitute
+--- @return string|nil result Text with substituted environment variables
 function M.substitute_system_env(text)
   if not text then
     return text
@@ -55,49 +59,62 @@ function M.substitute_system_env(text)
   return result
 end
 
--- Find .env.http file by searching up the directory tree
--- Starts from start_dir and searches up to root
+--- Find .env.http file by searching up the directory tree
+--- Uses vim.fs.find for efficient upward search (Neovim 0.8+)
+--- @param start_dir string Starting directory path
+--- @param filename string|nil Filename to search for (default: '.env.http')
+--- @return string|nil path Full path to env file or nil if not found
 function M.find_env_file(start_dir, filename)
   filename = filename or '.env.http'
 
   -- Normalize path
-  local current_dir = start_dir
-  if not current_dir or current_dir == '' then
+  if not start_dir or start_dir == '' then
     return nil
   end
 
-  -- Remove trailing slash
-  current_dir = current_dir:gsub('/$', '')
+  -- Use vim.fs.find for efficient upward search (Neovim 0.8+)
+  if vim.fs and vim.fs.find then
+    local found = vim.fs.find(filename, {
+      upward = true,
+      path = start_dir,
+      type = 'file',
+      limit = 1,
+    })
 
-  -- Search up the directory tree
-  local max_iterations = 20 -- Prevent infinite loop
-  local iterations = 0
-
-  while iterations < max_iterations do
-    local env_file_path = current_dir .. '/' .. filename
-
-    -- Check if file exists and is readable
-    local file = io.open(env_file_path, 'r')
-    if file then
-      file:close()
-      return env_file_path
+    if found and #found > 0 then
+      return found[1]
     end
+  else
+    -- Fallback for older Neovim versions (should not happen with 0.8+ requirement)
+    -- This is a simplified manual search
+    local current_dir = start_dir:gsub('/$', '')
+    local max_iterations = 20
 
-    -- Move up one directory
-    local parent_dir = current_dir:match('(.+)/[^/]+$')
-    if not parent_dir or parent_dir == current_dir then
-      -- Reached root
-      break
+    for _ = 1, max_iterations do
+      local env_file_path = current_dir .. '/' .. filename
+      local file = io.open(env_file_path, 'r')
+
+      if file then
+        file:close()
+        return env_file_path
+      end
+
+      -- Move up one directory
+      local parent_dir = current_dir:match('(.+)/[^/]+$')
+      if not parent_dir or parent_dir == current_dir then
+        break
+      end
+
+      current_dir = parent_dir
     end
-
-    current_dir = parent_dir
-    iterations = iterations + 1
   end
 
   return nil
 end
 
--- Load variables from environment file
+--- Load variables from environment file
+--- @param file_path string|nil Path to environment file
+--- @return table variables Dictionary of loaded variables
 function M.load_env_file(file_path)
   if not file_path or file_path == '' then
     return {}
@@ -135,9 +152,12 @@ function M.clear_variables()
   variables = {}
 end
 
--- Substitute variables in text
--- Replaces {{variableName}} with actual values
--- Also supports system environment variables with $VAR or ${VAR}
+--- Substitute variables in text
+--- First replaces system environment variables ($VAR, ${VAR})
+--- Then replaces user-defined variables ({{variableName}})
+--- @param text string|nil Text to substitute
+--- @param vars table|nil Variable dictionary (uses module variables if nil)
+--- @return string|nil result Text with substituted variables
 function M.substitute(text, vars)
   if not text then
     return text
@@ -163,7 +183,10 @@ function M.substitute(text, vars)
   return result
 end
 
--- Substitute variables in request object
+--- Substitute variables in request object (URL, headers, body)
+--- @param request table|nil Request object
+--- @param vars table|nil Variable dictionary (uses module variables if nil)
+--- @return table|nil request Request with substituted variables
 function M.substitute_request(request, vars)
   if not request then
     return request

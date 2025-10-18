@@ -23,18 +23,39 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 
 ```lua
 {
-  'yourusername/nrest.nvim',
+  'https://gitlab.ttu.ch/matthias/nrest.git',
   ft = 'http',
   config = function()
     require('nrest').setup({
-      -- Optional configuration (defaults shown)
-      result_split_horizontal = false,  -- Vertical split
-      skip_ssl_verification = false,    -- Verify SSL certificates
-      timeout = 30000,                  -- Request timeout (30s)
+      -- Split direction for result window
+      result_split_horizontal = false,  -- false = vertical, true = horizontal
+
+      -- Request execution
+      skip_ssl_verification = false,    -- Skip SSL certificate verification (curl -k)
+      timeout = 10000,                  -- Request timeout in milliseconds (10s)
+
+      -- Response formatting
+      format_response = true,           -- Format JSON responses with jq
+
+      -- Environment variables
+      env_file = nil,                   -- nil = disabled, 'auto' = auto-discover, or path
+
+      -- Syntax highlighting
       highlight = {
         enabled = true,
         timeout = 150,
       },
+
+      -- Result display options
+      result = {
+        show_url = true,
+        show_http_info = true,
+        show_headers = true,
+        show_body = true,
+        folding = true,                 -- Enable header folding
+      },
+
+      -- Keybindings
       keybindings = {
         run_request = '<leader>hr',
         run_request_under_cursor = '<leader>hc',
@@ -48,12 +69,54 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 
 ```lua
 use {
-  'yourusername/nrest.nvim',
+  'https://gitlab.ttu.ch/matthias/nrest.git',
   ft = 'http',
   config = function()
-    require('nrest').setup()
+    require('nrest').setup({
+      -- All options are optional, these are the defaults
+      result_split_horizontal = false,
+      skip_ssl_verification = false,
+      timeout = 10000,
+      format_response = true,
+      env_file = nil,
+      highlight = {
+        enabled = true,
+        timeout = 150,
+      },
+      result = {
+        show_url = true,
+        show_http_info = true,
+        show_headers = true,
+        show_body = true,
+        folding = true,
+      },
+      keybindings = {
+        run_request = '<leader>hr',
+        run_request_under_cursor = '<leader>hc',
+      },
+    })
   end,
 }
+```
+
+### Manual Installation
+
+Clone the repository into your Neovim plugin directory:
+
+```bash
+# For Unix/Linux/macOS
+git clone https://gitlab.ttu.ch/matthias/nrest.git ~/.local/share/nvim/site/pack/plugins/start/nrest.nvim
+
+# For Windows
+git clone https://gitlab.ttu.ch/matthias/nrest.git %LOCALAPPDATA%\nvim-data\site\pack\plugins\start\nrest.nvim
+```
+
+Then add to your `init.lua`:
+
+```lua
+require('nrest').setup({
+  -- Your configuration here
+})
 ```
 
 ## Usage

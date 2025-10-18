@@ -1,5 +1,8 @@
 local M = {}
 
+-- Store buffer reference (will be nil if buffer is deleted)
+local result_buffer = nil
+
 -- Show HTTP response in a split window
 function M.show_response(response, config)
   if not response.success then
@@ -10,18 +13,27 @@ function M.show_response(response, config)
   -- Create or reuse result buffer
   local result_buf = M.get_or_create_result_buffer()
 
+  -- Verify buffer is valid
+  if not vim.api.nvim_buf_is_valid(result_buf) then
+    vim.notify('Failed to create result buffer', vim.log.levels.ERROR)
+    return
+  end
+
   -- Format response content
   local lines = M.format_response(response, config)
+
+  -- Ensure buffer is modifiable before setting content
+  vim.bo[result_buf].modifiable = true
 
   -- Set buffer content
   vim.api.nvim_buf_set_lines(result_buf, 0, -1, false, lines)
 
-  -- Set buffer options
-  vim.api.nvim_buf_set_option(result_buf, 'modifiable', false)
-  vim.api.nvim_buf_set_option(result_buf, 'buftype', 'nofile')
-  vim.api.nvim_buf_set_option(result_buf, 'bufhidden', 'hide')
-  vim.api.nvim_buf_set_option(result_buf, 'swapfile', false)
-  vim.api.nvim_buf_set_option(result_buf, 'filetype', 'http-result')
+  -- Set buffer options (using modern API)
+  vim.bo[result_buf].buftype = 'nofile'
+  vim.bo[result_buf].bufhidden = 'hide'
+  vim.bo[result_buf].swapfile = false
+  vim.bo[result_buf].filetype = 'http-result'
+  vim.bo[result_buf].modifiable = false
 
   -- Show buffer in split
   M.show_buffer_in_split(result_buf, config)
@@ -34,42 +46,103 @@ end
 
 -- Get or create result buffer
 function M.get_or_create_result_buffer()
-  -- Check if result buffer already exists
+  -- Check if cached buffer is still valid
+  if result_buffer and vim.api.nvim_buf_is_valid(result_buffer) then
+    vim.bo[result_buffer].modifiable = true
+    return result_buffer
+  end
+
+  -- Buffer is invalid, clear cache
+  result_buffer = nil
+
+  -- Check if a result buffer exists (by name)
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(buf) then
       local name = vim.api.nvim_buf_get_name(buf)
       if name:match('nrest%-result') then
-        vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+        result_buffer = buf
+        vim.bo[buf].modifiable = true
         return buf
       end
     end
   end
 
-  -- Create new buffer
-  local buf = vim.api.nvim_create_buf(false, true)
+  -- Create new buffer (listed=true to prevent dashboard from showing)
+  local buf = vim.api.nvim_create_buf(true, false)
   vim.api.nvim_buf_set_name(buf, 'nrest-result')
+
+  -- Set buffer options immediately
+  vim.bo[buf].buftype = 'nofile'
+  vim.bo[buf].bufhidden = 'hide'
+  vim.bo[buf].swapfile = false
+  vim.bo[buf].buflisted = false  -- Hide from buffer list
+
+  -- Set up autocmd to clear cache when buffer is deleted
+  vim.api.nvim_create_autocmd('BufDelete', {
+    buffer = buf,
+    callback = function()
+      if result_buffer == buf then
+        result_buffer = nil
+      end
+    end,
+  })
+
+  result_buffer = buf
   return buf
 end
 
 -- Show buffer in split window
 function M.show_buffer_in_split(buf, config)
+  -- Verify buffer is valid
+  if not vim.api.nvim_buf_is_valid(buf) then
+    vim.notify('Invalid result buffer', vim.log.levels.ERROR)
+    return
+  end
+
   -- Check if buffer is already visible
   for _, win in ipairs(vim.api.nvim_list_wins()) do
-    if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == buf then
-      vim.api.nvim_set_current_win(win)
-      return
+    if vim.api.nvim_win_is_valid(win) then
+      local win_buf = vim.api.nvim_win_get_buf(win)
+      if win_buf == buf then
+        vim.api.nvim_set_current_win(win)
+        return
+      end
     end
   end
 
-  -- Create split
-  if config.result_split_horizontal then
-    vim.cmd('split')
-  else
-    vim.cmd('vsplit')
-  end
+  -- Save current window
+  local current_win = vim.api.nvim_get_current_win()
 
-  -- Show buffer
-  vim.api.nvim_win_set_buf(0, buf)
+  -- Disable dashboard autocmds temporarily to prevent interference
+  local eventignore = vim.o.eventignore
+  vim.o.eventignore = 'all'
+
+  -- Create split using API
+  local split_cmd = config.result_split_horizontal and 'split' or 'vsplit'
+
+  -- Use pcall to catch any errors during split creation
+  local ok, err = pcall(function()
+    vim.cmd(split_cmd)
+    local new_win = vim.api.nvim_get_current_win()
+
+    -- Re-enable events before setting buffer
+    vim.o.eventignore = eventignore
+
+    -- Verify we got a new window and it's valid
+    if new_win and vim.api.nvim_win_is_valid(new_win) and new_win ~= current_win then
+      vim.api.nvim_win_set_buf(new_win, buf)
+    else
+      -- Fallback: try to set buffer in current window
+      vim.api.nvim_win_set_buf(current_win, buf)
+    end
+  end)
+
+  -- Ensure eventignore is restored even if there's an error
+  vim.o.eventignore = eventignore
+
+  if not ok then
+    vim.notify('Error opening result window: ' .. tostring(err), vim.log.levels.ERROR)
+  end
 end
 
 -- Format response for display

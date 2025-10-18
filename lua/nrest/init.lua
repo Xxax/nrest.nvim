@@ -6,6 +6,7 @@ M.config = {
   result_split_horizontal = false,
   result_split_in_place = false,
   skip_ssl_verification = false,
+  timeout = 30000, -- Request timeout in milliseconds (30 seconds)
   highlight = {
     enabled = true,
     timeout = 150,
@@ -53,11 +54,18 @@ function M.run()
     return
   end
 
+  -- Validate request
+  local valid, error_msg = parser.validate_request(request)
+  if not valid then
+    vim.notify('Invalid request: ' .. error_msg, vim.log.levels.ERROR)
+    return
+  end
+
   -- Execute request
   vim.notify('Executing request...', vim.log.levels.INFO)
   executor.execute(request, function(response)
     ui.show_response(response, M.config)
-  end)
+  end, M.config)
 end
 
 -- Run request under cursor
@@ -76,10 +84,17 @@ function M.run_at_cursor()
     return
   end
 
+  -- Validate request
+  local valid, error_msg = parser.validate_request(request)
+  if not valid then
+    vim.notify('Invalid request: ' .. error_msg, vim.log.levels.ERROR)
+    return
+  end
+
   vim.notify('Executing request...', vim.log.levels.INFO)
   executor.execute(request, function(response)
     ui.show_response(response, M.config)
-  end)
+  end, M.config)
 end
 
 return M

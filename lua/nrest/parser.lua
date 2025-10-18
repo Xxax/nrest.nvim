@@ -1,5 +1,42 @@
 local M = {}
 
+-- Valid HTTP methods
+local VALID_METHODS = {
+  GET = true,
+  POST = true,
+  PUT = true,
+  PATCH = true,
+  DELETE = true,
+  HEAD = true,
+  OPTIONS = true,
+  CONNECT = true,
+  TRACE = true,
+}
+
+-- Validate HTTP request
+function M.validate_request(request)
+  if not request then
+    return false, 'Request is nil'
+  end
+
+  -- Validate method
+  if not request.method or not VALID_METHODS[request.method] then
+    return false, 'Invalid HTTP method: ' .. (request.method or 'nil')
+  end
+
+  -- Validate URL
+  if not request.url or request.url == '' then
+    return false, 'URL is missing'
+  end
+
+  -- Validate URL scheme
+  if not request.url:match('^https?://') then
+    return false, 'URL must start with http:// or https://'
+  end
+
+  return true, nil
+end
+
 -- Parse HTTP request from lines
 function M.parse_request(lines)
   local requests = M.parse_all_requests(lines)

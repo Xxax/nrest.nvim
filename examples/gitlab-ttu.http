@@ -8,7 +8,7 @@
 # Or define it in .env.http: @GITLAB_TOKEN = your-token-here
 
 @baseUrl = https://gitlab.ttu.ch/api/v4
-@auth bearer $GITLAB_TOKEN
+@auth bearer {{GITLAB_TOKEN}}
 
 ### Get current user info
 GET {{baseUrl}}/user

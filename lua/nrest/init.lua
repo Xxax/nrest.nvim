@@ -21,6 +21,9 @@ M.config = {
   format_response = true, -- Format response body (JSON with jq, etc.)
   -- Environment variables
   env_file = nil, -- Optional path to environment file (e.g., '.env.http')
+  -- Set to 'auto' to automatically search for .env.http in directory hierarchy
+  -- Set to specific path to use that file
+  -- Set to nil to disable env file loading
   -- Custom keybindings
   keybindings = {
     run_request = '<leader>hr',
@@ -58,7 +61,17 @@ function M.run()
   -- Load variables from env file if configured
   local env_vars = {}
   if M.config.env_file then
-    env_vars = variables.load_env_file(M.config.env_file)
+    local env_file_path = M.config.env_file
+
+    -- Auto-discover .env.http if configured
+    if env_file_path == 'auto' then
+      local buffer_dir = vim.fn.expand('%:p:h')
+      env_file_path = variables.find_env_file(buffer_dir)
+    end
+
+    if env_file_path then
+      env_vars = variables.load_env_file(env_file_path)
+    end
   end
 
   -- Merge variables (buffer vars override env file vars)
@@ -128,7 +141,17 @@ function M.run_at_cursor()
   -- Load variables from env file if configured
   local env_vars = {}
   if M.config.env_file then
-    env_vars = variables.load_env_file(M.config.env_file)
+    local env_file_path = M.config.env_file
+
+    -- Auto-discover .env.http if configured
+    if env_file_path == 'auto' then
+      local buffer_dir = vim.fn.expand('%:p:h')
+      env_file_path = variables.find_env_file(buffer_dir)
+    end
+
+    if env_file_path then
+      env_vars = variables.load_env_file(env_file_path)
+    end
   end
 
   -- Merge variables (buffer vars override env file vars)

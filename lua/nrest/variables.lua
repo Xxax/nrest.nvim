@@ -55,6 +55,48 @@ function M.substitute_system_env(text)
   return result
 end
 
+-- Find .env.http file by searching up the directory tree
+-- Starts from start_dir and searches up to root
+function M.find_env_file(start_dir, filename)
+  filename = filename or '.env.http'
+
+  -- Normalize path
+  local current_dir = start_dir
+  if not current_dir or current_dir == '' then
+    return nil
+  end
+
+  -- Remove trailing slash
+  current_dir = current_dir:gsub('/$', '')
+
+  -- Search up the directory tree
+  local max_iterations = 20 -- Prevent infinite loop
+  local iterations = 0
+
+  while iterations < max_iterations do
+    local env_file_path = current_dir .. '/' .. filename
+
+    -- Check if file exists and is readable
+    local file = io.open(env_file_path, 'r')
+    if file then
+      file:close()
+      return env_file_path
+    end
+
+    -- Move up one directory
+    local parent_dir = current_dir:match('(.+)/[^/]+$')
+    if not parent_dir or parent_dir == current_dir then
+      -- Reached root
+      break
+    end
+
+    current_dir = parent_dir
+    iterations = iterations + 1
+  end
+
+  return nil
+end
+
 -- Load variables from environment file
 function M.load_env_file(file_path)
   if not file_path or file_path == '' then

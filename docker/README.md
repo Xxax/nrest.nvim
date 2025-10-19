@@ -32,7 +32,7 @@ docker-compose down
 ## 📚 What's Included
 
 - **Neovim** (latest stable from Alpine Linux)
-- **nrest.nvim** (v0.1.0) - Pre-configured and ready to use
+- **nrest.nvim** (v0.1.1) - Pre-configured and ready to use
 - **Dependencies**: curl, jq, git
 - **Plugin Manager**: lazy.nvim
 - **Theme**: Tokyo Night
@@ -201,7 +201,7 @@ Content-Type: application/json
 
 {
   "message": "Hello from nrest.nvim!",
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
 ```
 
@@ -334,7 +334,7 @@ MIT License - see LICENSE file for details
 
 - **Repository**: https://gitlab.ttu.ch/matthias/nrest
 - **Issues**: https://gitlab.ttu.ch/matthias/nrest/-/issues
-- **Release**: https://gitlab.ttu.ch/matthias/nrest/-/releases/v0.1.0
+- **Release**: https://gitlab.ttu.ch/matthias/nrest/-/releases/v0.1.1
 - **Documentation**: Run `:help nrest` in the container
 
 ## 💡 Next Steps

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-10-19
+
+### Added
+- GitHub mirror setup with automatic synchronization from GitLab
+- GitHub issue and pull request templates redirecting to GitLab
+- Repository information section in README with both installation options
+- Project logos (doc/nrest-logo*.png) for documentation
+
+### Changed
+- README.md now includes both GitLab (primary) and GitHub (mirror) installation instructions
+- Updated installation examples for lazy.nvim, packer.nvim, and manual installation
+- Added GitHub mirror badge to README
+
+### Removed
+- GitHub Actions workflow (`.github/workflows/test.yml`) - GitLab CI/CD is primary
+- Simplified mirror setup by removing `workflow` scope requirement for GitHub tokens
+
+### Infrastructure
+- GitLab Push Mirror configured for automatic sync to GitHub
+- temp/ directory excluded from git via .gitignore
+- GitHub repository serves as read-only mirror at https://github.com/Xxax/nrest.nvim
+
 ## [0.1.0] - 2025-10-19
 
 ### Added
@@ -59,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Notes
 
+**0.1.1**: GitHub mirror setup and infrastructure improvements
 **0.1.0**: Initial release with comprehensive features, security hardening, and test infrastructure
 
 ---

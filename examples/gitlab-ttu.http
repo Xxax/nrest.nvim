@@ -24,6 +24,9 @@ Accept: application/json
 GET {{baseUrl}}/projects/{{projectId}}
 Accept: application/json
 
+### Show the latest status from the pipeline
+GET {{baseUrl}}/projects/{{projectId}}/pipelines
+
 ### List project issues
 GET {{baseUrl}}/projects/{{projectId}}/issues
 Accept: application/json

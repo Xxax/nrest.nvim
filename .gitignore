@@ -21,6 +21,7 @@ test.http
 # Temporary files
 *.tmp
 *.log
+temp/
 
 # Development
 .ai-assistant/.cursor/

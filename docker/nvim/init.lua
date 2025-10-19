@@ -19,7 +19,7 @@ vim.opt.mouse = "a"             -- Enable mouse support
 vim.opt.termguicolors = true    -- Enable 24-bit colors
 vim.opt.signcolumn = "yes"      -- Always show sign column
 vim.opt.updatetime = 300        -- Faster completion
-vim.opt.timeoutlen = 300        -- Faster key sequences
+vim.opt.timeoutlen = 1000       -- 1 second for key sequences (easier for demos/beginners)
 
 -- Split behavior
 vim.opt.splitbelow = true       -- Horizontal splits go below

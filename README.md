@@ -26,11 +26,11 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 
 ## 📍 Repository Information
 
-**Primary development:** [GitLab](https://gitlab.ttu.ch/matthias/nrest)
-**GitHub Mirror:** [github.com/Xxax/nrest.nvim](https://github.com/Xxax/nrest.nvim) (read-only, auto-synced)
+**Primary development:** [GitLab](https://gitlab.ttu.ch/matthias/nrest) (private development, auto-synced to GitHub)
+**GitHub Mirror:** [github.com/Xxax/nrest.nvim](https://github.com/Xxax/nrest.nvim) (public mirror with issues/PRs)
 
-- 🐛 **Issues:** Please open on [GitLab Issues](https://gitlab.ttu.ch/matthias/nrest/-/issues)
-- 🔀 **Pull Requests:** Please submit to [GitLab](https://gitlab.ttu.ch/matthias/nrest/-/merge_requests)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/Xxax/nrest.nvim/issues) - Report bugs and request features
+- 🔀 **Pull Requests:** [GitHub PRs](https://github.com/Xxax/nrest.nvim/pulls) - Contribute code (synced to GitLab)
 - 📦 **Releases:** Available on both platforms (synced automatically)
 
 You can install from either repository - both URLs work with all Neovim plugin managers!

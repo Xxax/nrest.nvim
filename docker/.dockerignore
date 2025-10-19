@@ -1,0 +1,41 @@
+# Git files
+.git
+.gitignore
+.github
+
+# GitLab CI
+.gitlab
+.gitlab-ci.yml
+.gitlab-ci-simple.yml
+
+# Documentation
+*.md
+!docker/README.md
+ARCHITECTURE.adoc
+CLAUDE.md
+
+# Tests
+tests/
+
+# AI Assistant
+.ai-assistant/
+
+# Build artifacts
+*.log
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Temporary files
+tmp/
+temp/
+.tmp/

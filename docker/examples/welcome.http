@@ -1,0 +1,116 @@
+# 🚀 Welcome to nrest.nvim!
+#
+# This is an interactive demo of nrest.nvim - a fast HTTP REST client for Neovim.
+#
+# ⌨️  Quick Start:
+#   - Place cursor on any request below
+#   - Press <leader>hc (Space + h + c) to execute
+#   - Or use :NrestRunCursor command
+#
+# 📚 More Commands:
+#   :NrestHelp         - Show quick reference
+#   :checkhealth nrest - Check plugin status
+#
+# 💡 Try the examples below!
+
+### 1. Simple GET Request
+# The most basic HTTP request - fetch data from an API
+GET https://httpbin.org/get
+Accept: application/json
+
+### 2. GET with Query Parameters
+# URLs with query parameters work seamlessly
+GET https://httpbin.org/get?name=nrest&version=0.1.0
+User-Agent: nrest.nvim/0.1.0
+
+### 3. GET with Custom Headers
+# Add any headers you need
+GET https://httpbin.org/headers
+Accept: application/json
+X-Custom-Header: nrest-demo
+X-Request-ID: 12345
+
+### 4. POST with JSON Body
+# Send JSON data to an API
+POST https://httpbin.org/post
+Content-Type: application/json
+Accept: application/json
+
+{
+  "message": "Hello from nrest.nvim!",
+  "plugin": "nrest.nvim",
+  "version": "0.1.0",
+  "features": ["fast", "lightweight", "zero dependencies"]
+}
+
+### 5. PUT Request
+# Update resources with PUT
+PUT https://httpbin.org/put
+Content-Type: application/json
+
+{
+  "id": 123,
+  "status": "updated",
+  "timestamp": "2025-10-19"
+}
+
+### 6. PATCH Request
+# Partial updates with PATCH
+PATCH https://httpbin.org/patch
+Content-Type: application/json
+
+{
+  "status": "active"
+}
+
+### 7. DELETE Request
+# Remove resources
+DELETE https://httpbin.org/delete
+Authorization: Bearer demo-token
+
+### 8. Request with Bearer Token Authentication
+# See auth-examples.http for more auth methods
+GET https://httpbin.org/bearer
+Authorization: Bearer demo-token-12345
+
+### 9. Response Format Demo
+# This endpoint returns JSON - nrest.nvim will format it with jq
+GET https://httpbin.org/json
+Accept: application/json
+
+### 10. Check Your IP
+# See what IP address the server sees
+GET https://httpbin.org/ip
+
+### 11. User Agent Echo
+# The server echoes back your user agent
+GET https://httpbin.org/user-agent
+User-Agent: nrest.nvim-demo/0.1.0
+
+### 12. Delay Response (Timeout Test)
+# This request waits 2 seconds before responding
+# Good for testing async behavior
+GET https://httpbin.org/delay/2
+
+### 13. Status Code Testing
+# Test different HTTP status codes
+GET https://httpbin.org/status/200
+
+### 14. Random Data
+# Get random UUID
+GET https://httpbin.org/uuid
+
+# 📖 Next Steps:
+#   - Open variables-demo.http to learn about variables
+#   - Open auth-examples.http to learn about authentication
+#   - Open advanced.http for advanced features
+#
+# 🌟 Features you've just tested:
+#   ✅ GET, POST, PUT, PATCH, DELETE requests
+#   ✅ Custom headers
+#   ✅ JSON body
+#   ✅ JSON response formatting
+#   ✅ Async execution
+#   ✅ Multiple requests in one file
+#
+# Happy testing! 🎉

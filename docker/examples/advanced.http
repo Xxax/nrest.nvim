@@ -1,0 +1,334 @@
+# ⚡ Advanced Features
+#
+# Explore advanced capabilities of nrest.nvim
+#
+# 💡 Execute with <leader>hc
+
+# ====================================
+# Response Folding
+# ====================================
+# Headers are automatically foldable for cleaner display
+# Keybindings in response buffer:
+#   za - Toggle fold
+#   zR - Open all folds
+#   zM - Close all folds
+
+### 1. Large Response with Folding
+# After execution, try folding/unfolding headers
+GET https://httpbin.org/headers
+
+# ====================================
+# JSON Formatting
+# ====================================
+# JSON responses are automatically formatted with jq
+
+### 2. Complex JSON Response
+GET https://httpbin.org/json
+Accept: application/json
+
+### 3. Nested JSON
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "user": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "address": {
+      "street": "123 Main St",
+      "city": "Springfield",
+      "country": "USA"
+    },
+    "preferences": {
+      "theme": "dark",
+      "notifications": true,
+      "privacy": {
+        "shareData": false,
+        "cookies": "essential"
+      }
+    }
+  },
+  "metadata": {
+    "version": "0.1.0",
+    "timestamp": "2025-10-19T00:00:00Z",
+    "tags": ["demo", "advanced", "nested"]
+  }
+}
+
+# ====================================
+# Redirect Handling
+# ====================================
+# nrest.nvim automatically follows redirects
+
+### 4. HTTP to HTTPS Redirect
+# Many sites redirect HTTP → HTTPS
+GET http://httpbin.org/get
+
+### 5. Absolute Redirect
+GET https://httpbin.org/absolute-redirect/3
+
+### 6. Relative Redirect
+GET https://httpbin.org/relative-redirect/2
+
+# ====================================
+# Different Content Types
+# ====================================
+
+### 7. HTML Response
+GET https://httpbin.org/html
+Accept: text/html
+
+### 8. XML Response
+GET https://httpbin.org/xml
+Accept: application/xml
+
+### 9. UTF-8 Response
+GET https://httpbin.org/encoding/utf8
+Accept: text/html
+
+### 10. Image Response (Base64 Data)
+GET https://httpbin.org/image/png
+Accept: image/png
+
+# ====================================
+# Request Methods Demo
+# ====================================
+
+### 11. OPTIONS Request
+# Check what methods are supported
+OPTIONS https://httpbin.org/get
+
+### 12. HEAD Request
+# Get headers only (no body)
+HEAD https://httpbin.org/get
+
+### 13. TRACE Request
+# Echo the request (useful for debugging)
+TRACE https://httpbin.org/trace
+
+# ====================================
+# Complex Headers
+# ====================================
+
+### 14. Multiple Accept Headers
+GET https://httpbin.org/headers
+Accept: application/json
+Accept-Language: en-US,en;q=0.9
+Accept-Encoding: gzip, deflate, br
+Cache-Control: no-cache
+Pragma: no-cache
+
+### 15. Custom Headers
+GET https://httpbin.org/headers
+X-Request-ID: req-12345-abcde
+X-Correlation-ID: corr-67890-fghij
+X-Custom-Header-1: value1
+X-Custom-Header-2: value2
+X-Custom-Header-3: value3
+
+# ====================================
+# Complex Request Bodies
+# ====================================
+
+### 16. Multiline JSON
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "description": "This is a very long description that spans multiple lines and demonstrates how nrest.nvim handles multiline JSON bodies with proper formatting and indentation",
+  "items": [
+    {
+      "id": 1,
+      "name": "Item One",
+      "price": 29.99,
+      "inStock": true
+    },
+    {
+      "id": 2,
+      "name": "Item Two",
+      "price": 49.99,
+      "inStock": false
+    },
+    {
+      "id": 3,
+      "name": "Item Three",
+      "price": 19.99,
+      "inStock": true
+    }
+  ],
+  "meta": {
+    "total": 3,
+    "page": 1,
+    "hasMore": false
+  }
+}
+
+### 17. Form Data (URL Encoded)
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+
+username=john&password=secret&remember=true&terms=accepted
+
+### 18. Plain Text Body
+POST https://httpbin.org/post
+Content-Type: text/plain
+
+This is a plain text body.
+It can span multiple lines.
+And contain any text you want.
+
+# ====================================
+# Timeout Testing
+# ====================================
+
+### 19. Fast Response (No Timeout)
+GET https://httpbin.org/delay/1
+
+### 20. Slow Response (May Timeout)
+# Default timeout is 10 seconds
+# This waits 5 seconds
+GET https://httpbin.org/delay/5
+
+### 21. Very Slow Response (Will Timeout)
+# This would wait 15 seconds (exceeds 10s timeout)
+# Uncomment to test timeout behavior
+# GET https://httpbin.org/delay/15
+
+# ====================================
+# Status Code Testing
+# ====================================
+
+### 22. Success Codes
+GET https://httpbin.org/status/200
+
+### 23. Redirect
+GET https://httpbin.org/status/301
+
+### 24. Client Error
+GET https://httpbin.org/status/404
+
+### 25. Server Error
+GET https://httpbin.org/status/500
+
+# ====================================
+# Conditional Responses
+# ====================================
+
+### 26. Cache Headers
+GET https://httpbin.org/cache
+If-Modified-Since: Mon, 18 Oct 2025 07:00:00 GMT
+
+### 27. ETag Support
+GET https://httpbin.org/etag/test-etag-123
+
+# ====================================
+# Cookie Testing
+# ====================================
+
+### 28. Set Cookies
+GET https://httpbin.org/cookies/set?name=nrest&version=0.1.0
+
+### 29. Get Cookies
+GET https://httpbin.org/cookies
+Cookie: session=abc123; user=john
+
+# ====================================
+# Compression
+# ====================================
+
+### 30. Gzip Response
+GET https://httpbin.org/gzip
+Accept-Encoding: gzip
+
+### 31. Deflate Response
+GET https://httpbin.org/deflate
+Accept-Encoding: deflate
+
+### 32. Brotli Response
+GET https://httpbin.org/brotli
+Accept-Encoding: br
+
+# ====================================
+# Response Inspection
+# ====================================
+
+### 33. Get Response Headers
+GET https://httpbin.org/response-headers?Custom-Header=CustomValue&Another=AnotherValue
+
+### 34. Stream Response
+# Useful for testing streaming endpoints
+GET https://httpbin.org/stream/5
+
+### 35. Drip Response
+# Slowly send data
+GET https://httpbin.org/drip?duration=2&numbytes=100
+
+# ====================================
+# Real-World API Examples
+# ====================================
+
+### 36. GitHub API - Public Repo Info
+GET https://api.github.com/repos/neovim/neovim
+Accept: application/vnd.github.v3+json
+User-Agent: nrest.nvim/0.1.0
+
+### 37. JSONPlaceholder - Sample Posts
+GET https://jsonplaceholder.typicode.com/posts/1
+Accept: application/json
+
+### 38. JSONPlaceholder - Create Post
+POST https://jsonplaceholder.typicode.com/posts
+Content-Type: application/json
+
+{
+  "title": "Testing nrest.nvim",
+  "body": "This is a test post created with nrest.nvim",
+  "userId": 1
+}
+
+### 39. REST Countries API
+GET https://restcountries.com/v3.1/name/switzerland
+Accept: application/json
+
+### 40. Random User API
+GET https://randomuser.me/api/?results=1
+Accept: application/json
+
+# ====================================
+# Tips & Tricks
+# ====================================
+#
+# 1. Response Buffer Navigation:
+#    - j/k - Move up/down
+#    - gg - Go to top
+#    - G - Go to bottom
+#    - /pattern - Search
+#    - n/N - Next/previous match
+#
+# 2. Folding:
+#    - za - Toggle current fold
+#    - zR - Open all folds
+#    - zM - Close all folds
+#    - zo - Open fold
+#    - zc - Close fold
+#
+# 3. Split Windows:
+#    - Ctrl+w h/j/k/l - Navigate between windows
+#    - Ctrl+w c - Close window
+#    - Ctrl+w o - Close other windows
+#    - Ctrl+w = - Equal size
+#
+# 4. Multiple Requests:
+#    - Use ### separators
+#    - <leader>hc runs request under cursor
+#    - <leader>hr runs first request
+#
+# 5. Health Check:
+#    - :checkhealth nrest
+#    - Verifies curl, jq, config
+#
+# 6. Configuration:
+#    - See ~/.config/nvim/init.lua
+#    - Customize keybindings, timeout, formatting
+#
+# Happy testing! 🚀

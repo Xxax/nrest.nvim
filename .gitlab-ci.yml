@@ -6,6 +6,7 @@ image: alpine:latest
 # Define stages
 stages:
   - test
+  - build
 
 # Cache dependencies between jobs
 cache:
@@ -103,3 +104,60 @@ check:health:
     - docker
     - linux
   allow_failure: true
+
+# Build and publish Docker demo image (only on main branch)
+build:docker-demo:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "/certs"
+    IMAGE_NAME: $CI_REGISTRY_IMAGE/demo
+  before_script:
+    # Login to GitLab Container Registry
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "Building Docker demo image..."
+    - docker build -f docker/Dockerfile -t $IMAGE_NAME:latest .
+
+    # Test the image
+    - echo "Testing Docker image..."
+    - docker run --rm $IMAGE_NAME:latest nvim --version
+    - docker run --rm $IMAGE_NAME:latest ls -la /home/nvim/demo/
+
+    # Push the image
+    - echo "Pushing Docker image to registry..."
+    - docker push $IMAGE_NAME:latest
+
+    # Clean up old images (keep only latest)
+    - echo "Cleaning up old images..."
+    - apk add --no-cache curl jq
+    - |
+      # Get repository ID for demo image
+      REPO_ID=$(curl -s -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories" | \
+        jq -r '.[] | select(.path | contains("demo")) | .id')
+
+      if [ -n "$REPO_ID" ]; then
+        echo "Found demo repository ID: $REPO_ID"
+        # Delete all tags except 'latest' to save space
+        curl -s -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories/$REPO_ID/tags" | \
+          jq -r '.[].name' | grep -v "^latest$" | while read tag; do
+            echo "Deleting old tag: $tag"
+            curl -X DELETE -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+              "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories/$REPO_ID/tags/$tag" || true
+          done
+        echo "Cleanup completed - only 'latest' tag remains"
+      else
+        echo "Demo repository not found - this is the first build"
+      fi
+
+    - echo "Docker image published successfully!"
+    - echo "Pull with: docker pull $IMAGE_NAME:latest"
+  only:
+    - main
+  tags:
+    - docker

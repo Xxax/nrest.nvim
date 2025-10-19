@@ -1,0 +1,2133 @@
+= nrest.nvim - Architecture Documentation
+:author: nrest.nvim Contributors
+:version: 1.0.0
+:date: 2025-10-19
+:toc: left
+:toclevels: 3
+:sectnums:
+:source-highlighter: highlight.js
+:icons: font
+:imagesdir: .
+:plantuml-format: svg
+
+[abstract]
+== Abstract
+
+This document describes the software architecture of *nrest.nvim*, a fast and lightweight HTTP REST client for Neovim. The architecture is presented using the *4+1 View Model*, which provides multiple perspectives to understand the system's structure, behavior, and deployment.
+
+*nrest.nvim* enables developers to execute HTTP requests directly from `.http` files within Neovim, featuring asynchronous execution, variable substitution, authentication presets, and zero Lua dependencies.
+
+---
+
+== Introduction
+
+=== Purpose
+
+This architecture document serves as the authoritative reference for understanding nrest.nvim's design, implementation, and organization. It targets:
+
+- Plugin developers and maintainers
+- Contributors seeking to understand the codebase
+- Architects evaluating the plugin's design
+- Users interested in technical internals
+
+=== Scope
+
+The document covers:
+
+- System decomposition into modules and components
+- Request execution flow and concurrency model
+- Development organization and testing strategy
+- Deployment structure within Neovim
+- Key usage scenarios and use cases
+
+=== System Overview
+
+*nrest.nvim* is a Neovim plugin that provides REST client functionality for `.http` files. It parses HTTP request specifications, executes them asynchronously using curl, and displays formatted responses in Neovim buffers.
+
+.Key Characteristics
+[cols="1,3"]
+|===
+|Characteristic |Description
+
+|*Language*
+|Pure Lua (Neovim 0.8.0+)
+
+|*Dependencies*
+|curl (required), jq (optional)
+
+|*Execution Model*
+|Asynchronous with vim.fn.jobstart()
+
+|*Security*
+|Pure Lua Base64, header validation, shell injection prevention
+
+|*Test Coverage*
+|69+ automated tests across 3 test suites
+
+|*Performance*
+|Zero Lua dependencies, optimized buffer management
+|===
+
+---
+
+== Logical View
+
+The Logical View describes the system's functional decomposition into modules and their responsibilities.
+
+=== Component Overview
+
+[plantuml, logical-components, svg]
+----
+@startuml
+!theme plain
+
+package "nrest.nvim" {
+
+  package "Plugin Layer" {
+    component [plugin/nrest.lua] as PluginInit
+    component [syntax/http.vim] as SyntaxHL
+    component [ftplugin/http.vim] as FiletypeSettings
+  }
+
+  package "Core Layer" {
+    component [init.lua] as Init
+    component [parser.lua] as Parser
+    component [executor.lua] as Executor
+    component [ui.lua] as UI
+    component [keymaps.lua] as Keymaps
+    component [health.lua] as Health
+  }
+
+  package "Utility Layer" {
+    component [variables.lua] as Variables
+    component [auth.lua] as Auth
+  }
+}
+
+component [Neovim API] as NvimAPI
+component [curl] as Curl
+component [jq] as Jq
+
+' Plugin Layer relationships
+PluginInit --> Init : "initializes"
+PluginInit --> SyntaxHL : "loads"
+PluginInit --> FiletypeSettings : "applies"
+
+' Core Layer relationships
+Init --> Parser : "uses"
+Init --> Variables : "uses"
+Init --> Auth : "uses"
+Init --> Executor : "uses"
+Init --> UI : "uses"
+Init --> Keymaps : "configures"
+
+Parser --> Variables : "uses"
+Executor --> NvimAPI : "jobstart()"
+Executor --> Curl : "executes"
+UI --> NvimAPI : "buffer ops"
+UI --> Jq : "formats JSON"
+
+Variables --> NvimAPI : "vim.env"
+Auth --> Variables : "substitutes"
+
+@enduml
+----
+
+=== Module Responsibilities
+
+==== Plugin Layer
+
+[cols="1,2,2"]
+|===
+|Module |File |Responsibility
+
+|*Plugin Initialization*
+|`plugin/nrest.lua`
+|Defines user commands (`:NrestRun`, `:NrestRunCursor`), sets up filetype detection for `.http` files, initializes plugin on VimEnter
+
+|*Syntax Highlighting*
+|`syntax/http.vim`
+|Provides syntax highlighting for HTTP methods, headers, URLs, variables, auth directives
+
+|*Filetype Settings*
+|`ftplugin/http.vim`
+|Configures filetype-specific settings (commentstring, buffer options)
+|===
+
+==== Core Layer
+
+[cols="1,2,2"]
+|===
+|Module |File |Responsibility
+
+|*Orchestrator*
+|`lua/nrest/init.lua`
+|Main entry point, configuration management, request orchestration, validation
+
+|*Parser*
+|`lua/nrest/parser.lua`
+|Parses `.http` file syntax, extracts HTTP method/URL/headers/body, detects request boundaries
+
+|*Executor*
+|`lua/nrest/executor.lua`
+|Builds curl commands, executes requests asynchronously, handles timeouts, parses responses
+
+|*UI Manager*
+|`lua/nrest/ui.lua`
+|Manages result buffer creation, window splits, response formatting, buffer caching
+
+|*Keymaps*
+|`lua/nrest/keymaps.lua`
+|Sets up buffer-local keybindings for request execution
+
+|*Health Check*
+|`lua/nrest/health.lua`
+|Implements `:checkhealth nrest` diagnostics
+|===
+
+==== Utility Layer
+
+[cols="1,2,2"]
+|===
+|Module |File |Responsibility
+
+|*Variable Handler*
+|`lua/nrest/variables.lua`
+|Parses variable definitions, loads env files, performs substitution (user vars + system env vars)
+
+|*Authentication*
+|`lua/nrest/auth.lua`
+|Parses auth directives, applies authentication (Basic, Bearer, API Key, Digest)
+|===
+
+=== Key Data Structures
+
+[plantuml, data-structures, svg]
+----
+@startuml
+!theme plain
+
+class Request {
+  +method: string
+  +url: string
+  +headers: table
+  +body: string
+  +digest_auth: table?
+  +start_line: number
+  +end_line: number
+}
+
+class Response {
+  +status_code: number
+  +status_text: string
+  +headers: string
+  +body: string
+  +curl_command: string
+}
+
+class Config {
+  +result_split_horizontal: boolean
+  +skip_ssl_verification: boolean
+  +timeout: number
+  +format_response: boolean
+  +env_file: string|nil
+  +highlight: table
+  +result: table
+  +keybindings: table
+}
+
+class Variables {
+  +user_vars: table<string, string>
+  +env_vars: table<string, string>
+  +system_vars: table<string, string>
+}
+
+class AuthConfig {
+  +type: string
+  +params: table
+}
+
+Request --> AuthConfig : "may have"
+Request "1" --> "*" Variables : "substitutes"
+Response --> Request : "produced by"
+Config --> Request : "configures"
+
+note right of Request
+  Primary data structure
+  representing an HTTP request
+  extracted from .http file
+end note
+
+note right of Response
+  Parsed curl output with
+  status, headers, body
+  formatted for display
+end note
+
+note right of Variables
+  Three-tier priority:
+  1. User-defined (@var = val)
+  2. Env file variables
+  3. System env ($VAR)
+end note
+
+@enduml
+----
+
+=== Module Interaction Pattern
+
+The system follows a *pipeline architecture* where data flows through stages:
+
+[source,text]
+----
+.http file → Parser → Variables → Auth → Validator → Executor → UI
+----
+
+Each stage transforms the request data:
+
+1. *Parser*: Text → Request object
+2. *Variables*: Request with placeholders → Request with substituted values
+3. *Auth*: Request → Request with auth headers
+4. *Validator*: Request → Validated request or error
+5. *Executor*: Request → Response
+6. *UI*: Response → Formatted display
+
+---
+
+== Process View
+
+The Process View describes the system's runtime behavior, concurrency, and communication patterns.
+
+=== Request Execution Flow
+
+[plantuml, execution-sequence, svg]
+----
+@startuml
+!theme plain
+
+actor User
+participant "init.lua" as Init
+participant "variables.lua" as Vars
+participant "parser.lua" as Parser
+participant "auth.lua" as Auth
+participant "executor.lua" as Executor
+participant "ui.lua" as UI
+participant "curl" as Curl
+
+User -> Init : :NrestRunCursor
+activate Init
+
+Init -> Init : Get buffer content
+Init -> Vars : parse_variables(content, config)
+activate Vars
+Vars -> Vars : Parse @var definitions
+Vars -> Vars : Load env_file if configured
+Vars --> Init : Return variables table
+deactivate Vars
+
+Init -> Parser : parse_request_at_line(content, cursor_line)
+activate Parser
+Parser -> Parser : Find request boundaries
+Parser -> Parser : Extract method, URL, headers, body
+Parser --> Init : Return request object
+deactivate Parser
+
+Init -> Vars : substitute_request(request, variables)
+activate Vars
+Vars -> Vars : Substitute system env vars ($VAR)
+Vars -> Vars : Substitute user vars ({{var}})
+Vars --> Init : Return substituted request
+deactivate Vars
+
+Init -> Auth : parse_auth_line(content)
+activate Auth
+Auth -> Auth : Find @auth directive
+Auth -> Auth : Parse auth type and params
+Auth --> Init : Return auth_config or nil
+deactivate Auth
+
+alt auth_config exists
+  Init -> Vars : substitute(auth_params, variables)
+  activate Vars
+  Vars --> Init : Substituted auth params
+  deactivate Vars
+
+  Init -> Auth : apply_auth(request, auth_config)
+  activate Auth
+  Auth -> Auth : Apply auth headers/metadata
+  Auth --> Init : Return modified request
+  deactivate Auth
+end
+
+Init -> Init : validate_request(request)
+alt validation fails
+  Init -> UI : show_response(error_response, config)
+  UI --> User : Display error
+else validation succeeds
+  Init -> Executor : execute(request, callback, config)
+  activate Executor
+
+  Executor -> Executor : build_curl_command(request, config)
+  Executor -> Curl : vim.fn.jobstart(curl_cmd)
+  activate Curl
+
+  note over Executor : Async execution starts\nTimeout timer set
+
+  Curl --> Executor : on_stdout (chunks)
+  Curl --> Executor : on_exit (exit_code)
+
+  Executor -> Executor : parse_curl_response(output)
+  Executor -> Executor : Guard callback invocation
+
+  deactivate Curl
+
+  Executor -> Init : callback(response)
+  deactivate Executor
+
+  Init -> UI : show_response(response, config)
+  activate UI
+  UI -> UI : Create/reuse result buffer
+  UI -> UI : Format JSON if applicable
+  UI -> UI : Set buffer content
+  UI -> UI : Open split window
+  UI --> User : Display formatted response
+  deactivate UI
+end
+
+deactivate Init
+
+@enduml
+----
+
+=== Asynchronous Execution with Timeout
+
+The executor implements sophisticated async handling with race condition protection.
+
+[plantuml, async-activity, svg]
+----
+@startuml
+!theme plain
+
+start
+
+:Build curl command;
+
+:Initialize callback_called flag;
+
+fork
+  :Start timeout timer\n(vim.fn.timer_start);
+
+  :Wait for timeout duration;
+
+  if (callback_called?) then (yes)
+    :Timer cancelled;
+    stop
+  else (no)
+    :Set callback_called = true;
+    :Stop job (jobstop);
+    :Invoke callback with timeout error;
+    stop
+  endif
+
+fork again
+  :Start job (jobstart);
+
+  :Accumulate stdout chunks;
+
+  :Wait for job completion;
+
+  if (callback_called?) then (yes)
+    :Job stopped by timeout;
+    stop
+  else (no)
+    :Set callback_called = true;
+    :Stop timeout timer;
+    :Parse curl response;
+    :Invoke callback with response;
+    stop
+  endif
+
+end fork
+
+@enduml
+----
+
+.Race Condition Guard
+[NOTE]
+====
+The `callback_called` flag (executor.lua:31-39) prevents double invocation:
+
+- Timeout handler checks flag before invoking callback
+- Job completion handler checks flag before invoking callback
+- First handler to run sets flag, second handler is skipped
+
+This ensures the callback runs *exactly once* even in edge cases.
+====
+
+=== Request Lifecycle State Machine
+
+[plantuml, request-states, svg]
+----
+@startuml
+!theme plain
+
+[*] --> Parsing : User triggers execution
+
+Parsing --> VariableSubstitution : Request parsed successfully
+Parsing --> Error : Parse error
+
+VariableSubstitution --> AuthApplication : Variables substituted
+VariableSubstitution --> Error : Substitution error
+
+AuthApplication --> Validation : Auth applied (if configured)
+AuthApplication --> Validation : No auth configured
+
+Validation --> Executing : Request valid
+Validation --> Error : Invalid request
+
+Executing --> ResponseReceived : curl exits normally
+Executing --> Timeout : Timeout exceeded
+Executing --> Error : curl error
+
+ResponseReceived --> Formatting : Response parsed
+Timeout --> DisplayError : Timeout message prepared
+Error --> DisplayError : Error message prepared
+
+Formatting --> DisplaySuccess : JSON formatted (if applicable)
+Formatting --> DisplaySuccess : Raw response
+
+DisplaySuccess --> [*] : Response displayed
+DisplayError --> [*] : Error displayed
+
+note right of Executing
+  Async state:
+  - Job running
+  - Timer active
+  - Callback pending
+end note
+
+@enduml
+----
+
+=== Concurrency Model
+
+*nrest.nvim* uses Neovim's single-threaded event loop with asynchronous I/O:
+
+[cols="1,2,2"]
+|===
+|Aspect |Implementation |Notes
+
+|*Execution Model*
+|Asynchronous, non-blocking
+|Uses `vim.fn.jobstart()` for async execution
+
+|*Thread Safety*
+|Single-threaded (Lua main thread)
+|All callbacks run on Neovim's event loop
+
+|*Concurrency Control*
+|Guard flags, timer management
+|Prevents race conditions in timeout/completion handlers
+
+|*I/O Operations*
+|Async (curl stdout), Sync (jq formatting)
+|jq formatting is synchronous via `vim.fn.system()`
+
+|*Buffer Operations*
+|Synchronous with validation
+|Always validates buffer with `nvim_buf_is_valid()` before operations
+|===
+
+---
+
+== Development View
+
+The Development View describes the system's organization from a developer's perspective.
+
+=== Package Structure
+
+[plantuml, package-diagram, svg]
+----
+@startuml
+!theme plain
+
+package "nrest.nvim" {
+
+  package "plugin/" {
+    [nrest.lua]
+  }
+
+  package "lua/nrest/" {
+    [init.lua]
+    [parser.lua]
+    [executor.lua]
+    [ui.lua]
+    [keymaps.lua]
+    [health.lua]
+    [variables.lua]
+    [auth.lua]
+  }
+
+  package "syntax/" {
+    [http.vim]
+  }
+
+  package "ftplugin/" {
+    [http.vim]
+  }
+
+  package "tests/" {
+    [parser_spec.lua]
+    [variables_spec.lua]
+    [auth_spec.lua]
+    [minimal_init.lua]
+  }
+
+  package ".github/workflows/" {
+    [test.yml]
+  }
+
+  package "doc/" {
+    [nrest.txt]
+  }
+}
+
+[nrest.lua] ..> [init.lua] : initializes
+[parser_spec.lua] ..> [parser.lua] : tests
+[variables_spec.lua] ..> [variables.lua] : tests
+[auth_spec.lua] ..> [auth.lua] : tests
+[test.yml] ..> [tests/] : runs
+
+@enduml
+----
+
+=== Layered Architecture
+
+[plantuml, layer-architecture, svg]
+----
+@startuml
+!theme plain
+
+package "User Interface Layer" {
+  [Commands\n:NrestRun\n:NrestRunCursor]
+  [Keymaps\n<leader>hc]
+  [Syntax Highlighting]
+}
+
+package "Application Layer" {
+  [init.lua\nOrchestration]
+  [health.lua\nDiagnostics]
+}
+
+package "Business Logic Layer" {
+  [parser.lua\nParsing]
+  [executor.lua\nExecution]
+  [ui.lua\nPresentation]
+}
+
+package "Utility Layer" {
+  [variables.lua\nSubstitution]
+  [auth.lua\nAuthentication]
+}
+
+package "External Dependencies" {
+  [Neovim API\nvim.fn, vim.api]
+  [curl\nHTTP Client]
+  [jq\nJSON Formatter]
+}
+
+[Commands\n:NrestRun\n:NrestRunCursor] --> [init.lua\nOrchestration]
+[Keymaps\n<leader>hc] --> [init.lua\nOrchestration]
+
+[init.lua\nOrchestration] --> [parser.lua\nParsing]
+[init.lua\nOrchestration] --> [executor.lua\nExecution]
+[init.lua\nOrchestration] --> [ui.lua\nPresentation]
+
+[parser.lua\nParsing] --> [variables.lua\nSubstitution]
+[executor.lua\nExecution] --> [variables.lua\nSubstitution]
+[init.lua\nOrchestration] --> [auth.lua\nAuthentication]
+
+[executor.lua\nExecution] --> [Neovim API\nvim.fn, vim.api]
+[executor.lua\nExecution] --> [curl\nHTTP Client]
+[ui.lua\nPresentation] --> [Neovim API\nvim.fn, vim.api]
+[ui.lua\nPresentation] --> [jq\nJSON Formatter]
+[variables.lua\nSubstitution] --> [Neovim API\nvim.fn, vim.api]
+
+@enduml
+----
+
+=== Module Dependencies
+
+[plantuml, module-dependencies, svg]
+----
+@startuml
+!theme plain
+
+component "init.lua" as Init
+component "parser.lua" as Parser
+component "executor.lua" as Executor
+component "ui.lua" as UI
+component "variables.lua" as Variables
+component "auth.lua" as Auth
+component "keymaps.lua" as Keymaps
+component "health.lua" as Health
+
+Init --> Parser : parses requests
+Init --> Executor : executes requests
+Init --> UI : displays responses
+Init --> Variables : substitutes variables
+Init --> Auth : applies authentication
+Init --> Keymaps : configures keymaps
+
+Parser --> Variables : detects variables
+
+Executor ..> Variables : optional (for env vars)
+Auth --> Variables : substitutes in auth params
+
+UI ..> Executor : displays responses
+
+note right of Init
+  Central orchestrator
+  Zero dependencies within nrest
+  All modules report to init
+end note
+
+note left of Variables
+  Pure utility module
+  No internal dependencies
+  Used by multiple modules
+end note
+
+note bottom of Auth
+  Depends only on Variables
+  Implements security-critical
+  Base64 encoding in pure Lua
+end note
+
+@enduml
+----
+
+=== Testing Architecture
+
+[cols="1,2,1,2"]
+|===
+|Test Suite |File |Test Count |Coverage
+
+|*Parser Tests*
+|`tests/parser_spec.lua`
+|25
+|HTTP parsing, validation, multiple requests, line ranges, error cases
+
+|*Variables Tests*
+|`tests/variables_spec.lua`
+|24
+|Variable parsing, substitution, env files, system vars, priority
+
+|*Auth Tests*
+|`tests/auth_spec.lua`
+|20
+|All auth types (Basic, Bearer, API Key, Digest), Base64 encoding, validation
+
+|*Total*
+|
+|*69*
+|Parser, variables, auth modules (100% passing)
+|===
+
+.Test Framework
+[source,lua]
+----
+-- tests/minimal_init.lua - plenary.nvim test configuration
+vim.cmd("set rtp+=" .. vim.fn.getcwd())
+vim.cmd("runtime! plugin/nrest.lua")
+
+-- Run with:
+-- nvim --headless -u tests/minimal_init.lua \
+--   -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
+----
+
+=== CI/CD Pipeline
+
+The plugin uses dual CI/CD systems for comprehensive coverage:
+
+[plantuml, cicd-diagram, svg]
+----
+@startuml
+!theme plain
+
+actor Developer
+participant GitHub
+participant "GitHub Actions" as GHA
+participant "GitLab CI/CD" as GitLab
+
+Developer -> GitHub : Push to main
+activate GHA
+
+GHA -> GHA : Test Neovim 0.8.0
+GHA -> GHA : Test Neovim 0.9.0
+GHA -> GHA : Test Neovim 0.10.0
+GHA -> GHA : Test Neovim stable
+GHA -> GHA : Test Neovim nightly
+GHA -> GHA : Optional: luacheck linting
+
+alt All tests pass
+  GHA -> GitHub : ✓ Checks passed
+else Any test fails
+  GHA -> GitHub : ✗ Checks failed
+  GitHub -> Developer : Notification
+end
+
+deactivate GHA
+
+Developer -> GitLab : Push/MR
+activate GitLab
+
+GitLab -> GitLab : Test stable Neovim (Alpine)
+alt main/develop branch
+  GitLab -> GitLab : Test latest from source
+end
+alt Merge request
+  GitLab -> GitLab : Optional: luacheck linting
+end
+
+alt All tests pass
+  GitLab -> GitLab : ✓ Pipeline passed
+else Any test fails
+  GitLab -> GitLab : ✗ Pipeline failed
+  GitLab -> Developer : Notification
+end
+
+deactivate GitLab
+
+@enduml
+----
+
+.CI/CD Configuration
+[cols="1,2,2"]
+|===
+|Platform |Triggers |Jobs
+
+|*GitHub Actions*
+|Push/PR to main
+|Test on 5 Neovim versions (0.8.0, 0.9.0, 0.10.0, stable, nightly), optional luacheck
+
+|*GitLab CI/CD*
+|Push/MR to any branch
+|Test on stable + latest (main/develop only), optional luacheck (MR only)
+|===
+
+=== Code Quality Standards
+
+==== Security Measures
+
+[cols="1,2,2"]
+|===
+|Security Issue |Solution |Location
+
+|*Shell Injection in Base64*
+|Pure Lua Base64 implementation
+|`auth.lua:13-31`
+
+|*Command Injection via Headers*
+|Header validation (newline/CR check)
+|`executor.lua:92-99`
+
+|*Callback Race Condition*
+|Guard flag prevents double invocation
+|`executor.lua:31-39`
+|===
+
+==== LuaDoc Documentation
+
+All public functions include LuaDoc annotations:
+
+[source,lua]
+----
+--- Execute HTTP request asynchronously using curl
+--- @param request table Request object with method, url, headers, body
+--- @param callback function Callback function(response) called on completion
+--- @param config table Plugin configuration
+function M.execute(request, callback, config)
+  -- Implementation
+end
+----
+
+Benefits:
+
+- LSP hover documentation
+- Type hints for parameters/returns
+- Self-documenting code
+- IDE integration
+
+==== DRY Refactoring
+
+The codebase eliminated ~170 LOC duplication in init.lua:
+
+.Before (duplication)
+[source,lua]
+----
+function M.run()
+  -- 90 lines of logic
+end
+
+function M.run_at_cursor()
+  -- 90 lines of duplicated logic
+end
+----
+
+.After (DRY)
+[source,lua]
+----
+local function _execute_request(get_request_fn)
+  -- Common logic extracted
+end
+
+function M.run()
+  return _execute_request(parser.parse_request)
+end
+
+function M.run_at_cursor()
+  return _execute_request(parser.parse_request_at_line)
+end
+----
+
+---
+
+== Physical View
+
+The Physical View describes how the software is deployed and installed within Neovim.
+
+=== Neovim Plugin Deployment
+
+[plantuml, deployment-diagram, svg]
+----
+@startuml
+!theme plain
+
+node "User's Machine" {
+
+  node "Neovim Runtime" {
+
+    folder "~/.local/share/nvim/site/pack/.../start/nrest.nvim" as PluginDir {
+
+      folder "plugin/" {
+        file "nrest.lua" as PluginLua
+      }
+
+      folder "lua/nrest/" {
+        file "init.lua" as InitLua
+        file "parser.lua" as ParserLua
+        file "executor.lua" as ExecutorLua
+        file "ui.lua" as UILua
+        file "variables.lua" as VarsLua
+        file "auth.lua" as AuthLua
+        file "keymaps.lua" as KeymapsLua
+        file "health.lua" as HealthLua
+      }
+
+      folder "syntax/" {
+        file "http.vim" as SyntaxVim
+      }
+
+      folder "ftplugin/" {
+        file "http.vim" as FtpluginVim
+      }
+
+      folder "doc/" {
+        file "nrest.txt" as DocTxt
+      }
+    }
+
+    folder "User's Project" {
+      file "requests.http" as HttpFile
+      file ".env.http" as EnvFile
+    }
+  }
+
+  component "curl" as Curl
+  component "jq" as Jq
+}
+
+PluginLua ..> InitLua : loads
+InitLua ..> ParserLua : requires
+InitLua ..> ExecutorLua : requires
+InitLua ..> UILua : requires
+InitLua ..> VarsLua : requires
+InitLua ..> AuthLua : requires
+
+HttpFile ..> PluginLua : triggers
+EnvFile ..> VarsLua : loaded by
+
+ExecutorLua ..> Curl : spawns
+UILua ..> Jq : spawns
+
+@enduml
+----
+
+=== Installation Methods
+
+==== Lazy.nvim (Recommended)
+
+[source,lua]
+----
+{
+  'nrest-nvim/nrest.nvim',
+  dependencies = {
+    -- Optional: for environment variable auto-discovery
+  },
+  ft = 'http', -- Lazy load on filetype
+  config = function()
+    require('nrest').setup({
+      result_split_horizontal = false,
+      skip_ssl_verification = false,
+      timeout = 10000,
+      format_response = true,
+      env_file = 'auto', -- Auto-discover .env.http
+    })
+  end,
+}
+----
+
+==== Packer.nvim
+
+[source,lua]
+----
+use {
+  'nrest-nvim/nrest.nvim',
+  config = function()
+    require('nrest').setup()
+  end,
+}
+----
+
+==== vim-plug
+
+[source,vim]
+----
+Plug 'nrest-nvim/nrest.nvim'
+
+lua << EOF
+require('nrest').setup()
+EOF
+----
+
+=== File System Structure
+
+[plantuml, filesystem-structure, svg]
+----
+@startuml
+!theme plain
+
+@startsalt
+{
+{T
++ nrest.nvim/
+++ plugin/
++++ nrest.lua | Plugin initialization, commands
+++ lua/
++++ nrest/
+++++ init.lua | Main module (orchestrator)
+++++ parser.lua | HTTP request parser
+++++ executor.lua | Async curl executor
+++++ ui.lua | Result buffer manager
+++++ variables.lua | Variable substitution
+++++ auth.lua | Authentication handler
+++++ keymaps.lua | Keymap configuration
+++++ health.lua | Health check diagnostics
+++ syntax/
++++ http.vim | Syntax highlighting
+++ ftplugin/
++++ http.vim | Filetype settings
+++ doc/
++++ nrest.txt | Vim help documentation
+++ tests/
++++ parser_spec.lua | Parser tests (25)
++++ variables_spec.lua | Variables tests (24)
++++ auth_spec.lua | Auth tests (20)
++++ minimal_init.lua | Test configuration
+++ .github/
++++ workflows/
+++++ test.yml | GitHub Actions CI
+++ .gitlab-ci.yml | GitLab CI/CD
+++ README.md | User documentation
+++ CHANGELOG.md | Version history
+++ LICENSE | MIT license
+}
+}
+@endsalt
+
+@enduml
+----
+
+=== External Dependencies
+
+[plantuml, dependencies-component, svg]
+----
+@startuml
+!theme plain
+
+component "nrest.nvim" as NRest
+
+component "curl" as Curl <<required>> {
+  note bottom
+    Version: Any
+    Usage: HTTP request execution
+    Command: curl -i -s -L [options] <url>
+  end note
+}
+
+component "jq" as Jq <<optional>> {
+  note bottom
+    Version: Any
+    Usage: JSON response formatting
+    Command: jq '.'
+    Fallback: Raw response if unavailable
+  end note
+}
+
+component "Neovim" as Neovim <<required>> {
+  note bottom
+    Version: >= 0.8.0
+    APIs: vim.fn.jobstart, vim.api.*
+    Features: Async I/O, Lua runtime
+  end note
+}
+
+NRest --> Curl : spawns process
+NRest ..> Jq : spawns process\n(optional)
+NRest --> Neovim : runs within
+
+@enduml
+----
+
+.Dependency Summary
+[cols="1,1,2,2"]
+|===
+|Dependency |Type |Version |Purpose
+
+|*Neovim*
+|Required
+|>= 0.8.0
+|Runtime environment, API access, Lua execution
+
+|*curl*
+|Required
+|Any
+|HTTP request execution (async via jobstart)
+
+|*jq*
+|Optional
+|Any
+|JSON response formatting (falls back to raw if unavailable)
+
+|*plenary.nvim*
+|Development
+|Latest
+|Test framework (not required for users)
+|===
+
+=== Environment Configuration
+
+==== System Requirements Check
+
+[source,vim]
+----
+:checkhealth nrest
+----
+
+Verifies:
+
+- Neovim version >= 0.8.0
+- curl availability and version
+- jq availability (optional)
+- Plugin configuration validity
+- Filetype detection
+- Common compatibility issues
+
+==== Environment Variables
+
+Users can define variables in three ways:
+
+1. *In .http files*: `@token = mytoken123`
+2. *In .env.http files*: `token=mytoken123` (auto-discovered or configured)
+3. *System environment*: `export TOKEN=mytoken123`
+
+Variable substitution order:
+
+1. System env vars (`$VAR`, `${VAR}`) → from OS environment
+2. User vars (`{{var}}`) → from .http file + .env.http file
+
+Priority (highest to lowest):
+
+1. Buffer variables (`@var = value` in .http file)
+2. Env file variables (`.env.http`)
+3. System environment variables (`$VAR`)
+
+---
+
+== Scenarios (Use Cases)
+
+The Scenarios View demonstrates key usage patterns through use cases and interaction flows.
+
+=== Use Case 1: Execute Simple HTTP Request
+
+==== Description
+
+User executes a basic GET request without variables or authentication.
+
+==== Actor
+
+Developer using Neovim
+
+==== Preconditions
+
+- nrest.nvim installed and configured
+- `.http` file open in Neovim
+- curl available in PATH
+
+==== Main Flow
+
+[plantuml, usecase1-sequence, svg]
+----
+@startuml
+!theme plain
+
+actor Developer
+participant Neovim
+participant nrest
+participant curl
+
+Developer -> Neovim : Opens test.http
+activate Neovim
+
+Developer -> Neovim : Types:\n###\nGET https://httpbin.org/get
+Developer -> Neovim : Presses <leader>hc
+
+Neovim -> nrest : :NrestRunCursor
+activate nrest
+
+nrest -> nrest : Parse request at cursor
+nrest -> nrest : Validate request
+nrest -> curl : Execute async:\ncurl -i -s -L https://httpbin.org/get
+activate curl
+
+curl --> nrest : HTTP/1.1 200 OK
+curl --> nrest : Headers + JSON body
+deactivate curl
+
+nrest -> nrest : Parse response
+nrest -> nrest : Detect JSON content
+nrest -> nrest : Format with jq
+
+nrest -> Neovim : Create vertical split
+nrest -> Neovim : Display formatted response
+
+Neovim -> Developer : Shows result buffer:\n- Status: 200 OK\n- Headers (folded)\n- Formatted JSON body
+deactivate nrest
+deactivate Neovim
+
+@enduml
+----
+
+==== .http File Example
+
+[source,http]
+----
+### Simple GET Request
+GET https://httpbin.org/get
+----
+
+==== Expected Result
+
+[source,http]
+----
+HTTP/1.1 200 OK
+Date: Sat, 19 Oct 2025 12:00:00 GMT
+Content-Type: application/json
+
+{
+  "args": {},
+  "headers": {
+    "Host": "httpbin.org"
+  },
+  "url": "https://httpbin.org/get"
+}
+----
+
+=== Use Case 2: Request with Variables
+
+==== Description
+
+User executes a POST request using both system environment variables and user-defined variables.
+
+==== Main Flow
+
+[plantuml, usecase2-sequence, svg]
+----
+@startuml
+!theme plain
+
+actor Developer
+participant nrest
+participant variables
+participant parser
+
+Developer -> nrest : :NrestRunCursor
+activate nrest
+
+nrest -> variables : parse_variables(buffer_content, config)
+activate variables
+
+variables -> variables : Find @var definitions:\n@baseUrl = httpbin.org\n@endpoint = post
+
+alt env_file = 'auto'
+  variables -> variables : Auto-discover .env.http
+  variables -> variables : Load env file variables
+end
+
+variables -> variables : Read system env: $API_KEY
+
+variables --> nrest : Return merged variables
+deactivate variables
+
+nrest -> parser : parse_request_at_line()
+activate parser
+parser --> nrest : Return request object
+deactivate parser
+
+nrest -> variables : substitute_request(request, vars)
+activate variables
+
+variables -> variables : Substitute $API_KEY → "secret123"
+variables -> variables : Substitute {{baseUrl}} → "httpbin.org"
+variables -> variables : Substitute {{endpoint}} → "post"
+
+variables --> nrest : Return substituted request
+deactivate variables
+
+nrest -> nrest : Execute request with substituted values
+deactivate nrest
+
+@enduml
+----
+
+==== .http File Example
+
+[source,http]
+----
+### Variables Demo
+@baseUrl = httpbin.org
+@endpoint = post
+
+POST https://{{baseUrl}}/{{endpoint}}
+Content-Type: application/json
+X-API-Key: $API_KEY
+
+{
+  "message": "Variables work!"
+}
+----
+
+==== .env.http Example
+
+[source,properties]
+----
+# Auto-discovered environment file
+baseUrl=api.example.com
+----
+
+==== Variable Resolution
+
+[cols="1,2,2"]
+|===
+|Variable |Source |Resolved Value
+
+|`$API_KEY`
+|System environment (`export API_KEY=secret123`)
+|`secret123`
+
+|`{{baseUrl}}`
+|.http file (`@baseUrl = httpbin.org`)
+|`httpbin.org` (buffer overrides .env.http)
+
+|`{{endpoint}}`
+|.http file (`@endpoint = post`)
+|`post`
+|===
+
+=== Use Case 3: Authentication with Bearer Token
+
+==== Description
+
+User executes an authenticated request using Bearer token from environment variable.
+
+==== Main Flow
+
+[plantuml, usecase3-sequence, svg]
+----
+@startuml
+!theme plain
+
+actor Developer
+participant nrest
+participant auth
+participant variables
+participant executor
+
+Developer -> nrest : :NrestRun (execute first request)
+activate nrest
+
+nrest -> variables : parse_variables()
+activate variables
+variables -> variables : Detect system env: $GITLAB_TOKEN
+variables --> nrest : Return variables
+deactivate variables
+
+nrest -> auth : parse_auth_line(buffer_content)
+activate auth
+auth -> auth : Find: @auth bearer $GITLAB_TOKEN
+auth --> nrest : Return {type: "bearer", params: ["$GITLAB_TOKEN"]}
+deactivate auth
+
+nrest -> variables : substitute(auth_params, vars)
+activate variables
+variables -> variables : Substitute $GITLAB_TOKEN → "glpat-xyz..."
+variables --> nrest : Return ["glpat-xyz..."]
+deactivate variables
+
+nrest -> auth : apply_auth(request, auth_config)
+activate auth
+auth -> auth : Add header:\nAuthorization: Bearer glpat-xyz...
+auth --> nrest : Return modified request
+deactivate auth
+
+nrest -> executor : execute(request, callback, config)
+activate executor
+executor -> executor : Build curl command with auth header
+executor --> nrest : Async execution started
+deactivate executor
+
+deactivate nrest
+
+@enduml
+----
+
+==== .http File Example
+
+[source,http]
+----
+### Authenticated Request
+@auth bearer $GITLAB_TOKEN
+
+GET https://gitlab.com/api/v4/user
+----
+
+==== curl Command Generated
+
+[source,bash]
+----
+curl -i -s -L \
+  -H "Authorization: Bearer glpat-xyz..." \
+  https://gitlab.com/api/v4/user
+----
+
+=== Use Case 4: Digest Authentication
+
+==== Description
+
+User executes a request with Digest authentication (requires username and password).
+
+==== Main Flow
+
+[plantuml, usecase4-sequence, svg]
+----
+@startuml
+!theme plain
+
+actor Developer
+participant nrest
+participant auth
+participant executor
+participant curl
+
+Developer -> nrest : :NrestRunCursor
+activate nrest
+
+nrest -> auth : parse_auth_line()
+activate auth
+auth -> auth : Find: @auth digest user pass
+auth --> nrest : {type: "digest", params: ["user", "pass"]}
+deactivate auth
+
+nrest -> auth : apply_auth(request, auth_config)
+activate auth
+auth -> auth : Set request.digest_auth = {\n  username: "user",\n  password: "pass"\n}
+note right
+  Digest auth is NOT added as header.
+  Instead, metadata is stored for
+  executor to use curl's --digest flag.
+end note
+auth --> nrest : Return request with digest_auth metadata
+deactivate auth
+
+nrest -> executor : execute(request, callback, config)
+activate executor
+
+executor -> executor : Detect request.digest_auth
+executor -> executor : Build curl command:\ncurl --digest -u user:pass [...]
+
+executor -> curl : Execute with digest auth
+activate curl
+curl -> curl : Perform digest challenge-response
+curl --> executor : HTTP/1.1 200 OK (authenticated)
+deactivate curl
+
+executor --> nrest : Return response
+deactivate executor
+
+deactivate nrest
+
+@enduml
+----
+
+==== .http File Example
+
+[source,http]
+----
+### Digest Authentication
+@auth digest testuser testpass
+
+GET https://httpbin.org/digest-auth/auth/testuser/testpass
+----
+
+==== curl Command Generated
+
+[source,bash]
+----
+curl -i -s -L --digest -u testuser:testpass \
+  https://httpbin.org/digest-auth/auth/testuser/testpass
+----
+
+.Security Note
+[WARNING]
+====
+Digest authentication credentials are passed to curl via command-line arguments. While more secure than Basic auth over HTTP, credentials may be visible in process lists.
+
+For production use:
+
+- Always use HTTPS
+- Store credentials in environment variables (`@auth digest $USER $PASS`)
+- Never commit credentials to version control
+====
+
+=== Use Case 5: Timeout Handling
+
+==== Description
+
+User executes a request to a slow endpoint that exceeds the configured timeout.
+
+==== Main Flow
+
+[plantuml, usecase5-activity, svg]
+----
+@startuml
+!theme plain
+
+start
+
+:User triggers request;
+:nrest validates and starts execution;
+
+fork
+  :Start timeout timer (10s default);
+  :Wait 10 seconds;
+
+  if (Job completed?) then (yes)
+    :Timer already cancelled;
+    stop
+  else (no)
+    :Set callback_called = true;
+    :Stop curl job (jobstop);
+    :Prepare timeout error response;
+    :Display error in result buffer;
+    stop
+  endif
+
+fork again
+  :Start curl job (async);
+  :curl connects to server;
+  :Server delays response (15s);
+
+  :Job receives jobstop signal;
+
+  if (callback_called?) then (yes)
+    note right
+      Timeout handler already
+      invoked callback
+    end note
+    :Clean up job;
+    stop
+  else (no)
+    note right
+      This branch never executes
+      because timeout fires first
+    end note
+  endif
+
+end fork
+
+@enduml
+----
+
+==== Configuration
+
+[source,lua]
+----
+require('nrest').setup({
+  timeout = 5000, -- 5 seconds (default: 10000)
+})
+----
+
+==== .http File Example
+
+[source,http]
+----
+### Timeout Test
+GET https://httpbin.org/delay/10
+----
+
+==== Expected Result
+
+[source,text]
+----
+Error: Request timed out after 5000ms
+
+curl -i -s -L https://httpbin.org/delay/10
+----
+
+=== Use Case 6: Multiple Requests in Single File
+
+==== Description
+
+User maintains multiple related requests in one file and executes them individually using cursor position.
+
+==== .http File Example
+
+[source,http]
+----
+### Get User
+GET https://api.github.com/users/octocat
+
+###
+
+### Get Repos
+GET https://api.github.com/users/octocat/repos
+
+###
+
+### Create Gist (Authenticated)
+@auth bearer $GITHUB_TOKEN
+
+POST https://api.github.com/gists
+Content-Type: application/json
+
+{
+  "description": "Example gist",
+  "public": false,
+  "files": {
+    "hello.txt": {
+      "content": "Hello World"
+    }
+  }
+}
+----
+
+==== Usage Pattern
+
+[cols="1,2,2"]
+|===
+|Cursor Position |Action |Result
+
+|Line 2 (within first request)
+|Press `<leader>hc`
+|Executes "Get User" request
+
+|Line 6 (within second request)
+|Press `<leader>hc`
+|Executes "Get Repos" request
+
+|Line 13 (within third request)
+|Press `<leader>hc`
+|Executes "Create Gist" with authentication
+
+|Anywhere
+|`:NrestRun`
+|Executes first request in file
+|===
+
+.Request Boundary Detection
+[NOTE]
+====
+The parser detects request boundaries using:
+
+- `###` separators (with optional trailing text)
+- Empty lines between requests
+- Start/end of buffer
+
+Each request's line range is tracked for cursor-based execution.
+====
+
+---
+
+== Appendix
+
+=== A. Configuration Reference
+
+==== Default Configuration
+
+[source,lua]
+----
+require('nrest').setup({
+  -- Result window split direction
+  result_split_horizontal = false, -- false = vertical split
+
+  -- Skip SSL certificate verification
+  skip_ssl_verification = false, -- Pass -k to curl
+
+  -- Request timeout in milliseconds
+  timeout = 10000, -- 10 seconds
+
+  -- Format JSON responses with jq
+  format_response = true, -- Disable for raw responses
+
+  -- Environment file for variables
+  env_file = nil, -- nil | 'auto' | '/path/to/.env.http'
+
+  -- Syntax highlighting
+  highlight = {
+    enabled = true,
+    timeout = 100, -- Not currently used
+  },
+
+  -- Result buffer display options
+  result = {
+    show_url = true,
+    show_http_info = true,
+    show_headers = true,
+    show_body = true,
+
+    -- Folding configuration
+    folding = {
+      enabled = true,
+    },
+  },
+
+  -- Keybindings (buffer-local for .http files)
+  keybindings = {
+    run_request = '<leader>hc',  -- Execute request at cursor
+    run_all = '<leader>ha',      -- Execute first request
+  },
+})
+----
+
+==== Configuration Options Detail
+
+[cols="1,1,2"]
+|===
+|Option |Type |Description
+
+|`result_split_horizontal`
+|boolean
+|`true` = horizontal split below, `false` = vertical split right
+
+|`skip_ssl_verification`
+|boolean
+|Skip SSL certificate verification (passes `-k` to curl)
+
+|`timeout`
+|number
+|Request timeout in milliseconds (default: 10000)
+
+|`format_response`
+|boolean
+|Format JSON responses with jq if available (default: true)
+
+|`env_file`
+|string\|nil
+|`nil` = disabled, `'auto'` = auto-discover `.env.http`, `'/path'` = specific file
+
+|`highlight.enabled`
+|boolean
+|Enable syntax highlighting for `.http` files
+
+|`result.show_url`
+|boolean
+|Display requested URL in result buffer
+
+|`result.show_http_info`
+|boolean
+|Display HTTP version and status line
+
+|`result.show_headers`
+|boolean
+|Display response headers
+
+|`result.show_body`
+|boolean
+|Display response body
+
+|`result.folding.enabled`
+|boolean
+|Enable marker-based folding for headers section
+
+|`keybindings.run_request`
+|string
+|Keymap to execute request at cursor (default: `<leader>hc`)
+
+|`keybindings.run_all`
+|string
+|Keymap to execute first request in file (default: `<leader>ha`)
+|===
+
+=== B. .http File Syntax Reference
+
+==== Request Format
+
+[source,http]
+----
+### Optional Request Name
+METHOD URL
+Header-Name: Header-Value
+Another-Header: Value
+
+Request body starts after empty line
+Can be multiple lines
+----
+
+==== Variable Definitions
+
+[source,http]
+----
+@variableName = value
+@baseUrl = https://api.example.com
+@token = mytoken123
+----
+
+==== Authentication Directives
+
+[source,http]
+----
+# Basic Authentication
+@auth basic username password
+
+# Bearer Token
+@auth bearer token_value
+
+# API Key (custom header)
+@auth apikey X-API-Key api_key_value
+
+# Digest Authentication
+@auth digest username password
+----
+
+==== Variable Substitution
+
+[source,http]
+----
+# User-defined variables
+GET https://{{baseUrl}}/{{endpoint}}
+
+# System environment variables
+Authorization: Bearer $GITLAB_TOKEN
+X-API-Key: ${API_KEY}
+----
+
+==== Request Separators
+
+[source,http]
+----
+### First Request
+GET https://example.com/1
+
+###
+
+### Second Request
+GET https://example.com/2
+
+### Third Request (separator above is optional)
+GET https://example.com/3
+----
+
+==== Complete Example
+
+[source,http]
+----
+### Production API Configuration
+@baseUrl = https://api.production.com
+@version = v1
+
+### Authenticate and Get User Profile
+@auth bearer $PROD_TOKEN
+
+GET {{baseUrl}}/{{version}}/user
+Accept: application/json
+
+###
+
+### Create Resource
+@auth bearer $PROD_TOKEN
+
+POST {{baseUrl}}/{{version}}/resources
+Content-Type: application/json
+X-Request-ID: {{$guid}}
+
+{
+  "name": "New Resource",
+  "description": "Created via nrest.nvim",
+  "tags": ["example", "api"]
+}
+----
+
+=== C. Troubleshooting Guide
+
+==== Check Health
+
+[source,vim]
+----
+:checkhealth nrest
+----
+
+Verifies:
+
+- Neovim version compatibility (>= 0.8.0)
+- curl availability
+- jq availability (optional)
+- Plugin configuration
+- Filetype detection
+
+==== Common Issues
+
+[cols="1,2,2"]
+|===
+|Issue |Cause |Solution
+
+|*"curl: command not found"*
+|curl not installed or not in PATH
+|Install curl: `apt install curl` / `brew install curl`
+
+|*Timeout on all requests*
+|Firewall blocking curl, network issues
+|Check network, try `skip_ssl_verification = true`, increase timeout
+
+|*Variables not substituting*
+|Variable syntax error, env file not found
+|Check syntax: `{{var}}` for user vars, `$VAR` for env vars. Verify env file path.
+
+|*Auth not working*
+|Wrong auth type, credential syntax error
+|Verify auth directive syntax. Use `:messages` to check for errors.
+
+|*JSON not formatted*
+|jq not installed
+|Install jq: `apt install jq` / `brew install jq`. Or set `format_response = false`.
+
+|*Result buffer not showing*
+|Buffer deleted, window closed
+|Execute request again. Check for conflicting keymaps.
+
+|*Dashboard shows on split*
+|snacks.nvim interference
+|Fixed in v1.0+. Update plugin or disable dashboard autocmds.
+|===
+
+==== Debug Mode
+
+Enable Neovim messages to see detailed error output:
+
+[source,vim]
+----
+:messages        " View recent messages
+:messages clear  " Clear message history
+----
+
+Check curl command generated:
+
+[source,vim]
+----
+" Result buffer shows curl command at bottom
+" Copy and run manually in terminal for debugging
+----
+
+=== D. Performance Considerations
+
+==== Async Execution
+
+All HTTP requests execute asynchronously via `vim.fn.jobstart()`:
+
+- Neovim UI remains responsive during requests
+- Multiple requests can run in parallel (if triggered separately)
+- Timeout mechanism prevents indefinite hangs
+
+==== Buffer Management
+
+Result buffer is cached and reused:
+
+- First execution: Creates new buffer
+- Subsequent executions: Reuses existing buffer (if valid)
+- Buffer deletion: Cache cleared via BufDelete autocmd
+
+This avoids repeated buffer creation overhead.
+
+==== Variable Substitution Performance
+
+Variable substitution uses regex-based replacement:
+
+- System env vars: Direct lookup from `vim.env`
+- User vars: Pattern matching with `string.gsub()`
+- Env file: Loaded once per execution (cached during request)
+
+For files with many variables, substitution is O(n×m) where:
+
+- n = number of lines in request
+- m = number of variables
+
+Typical performance: < 1ms for requests with < 100 variables.
+
+==== JSON Formatting
+
+JSON formatting spawns synchronous jq process:
+
+- Blocks Neovim UI briefly (typically < 100ms)
+- Falls back to raw response if jq fails
+- Can be disabled with `format_response = false`
+
+For large responses (> 1MB), formatting may take several seconds.
+
+=== E. Security Best Practices
+
+==== Credential Storage
+
+[WARNING]
+====
+**NEVER commit credentials to version control!**
+====
+
+.Recommended practices:
+
+1. *Use environment variables*:
++
+[source,bash]
+----
+export API_TOKEN="secret123"
+----
++
+[source,http]
+----
+@auth bearer $API_TOKEN
+----
+
+2. *Use .env.http files* (add to .gitignore):
++
+[source,properties]
+----
+# .env.http
+token=secret123
+----
++
+[source,gitignore]
+----
+# .gitignore
+.env.http
+----
+
+3. *Use credential managers*:
++
+[source,bash]
+----
+export API_TOKEN=$(pass show api/token)
+----
+
+==== SSL Verification
+
+Keep SSL verification *enabled* in production:
+
+[source,lua]
+----
+require('nrest').setup({
+  skip_ssl_verification = false, -- Default: secure
+})
+----
+
+Only disable for:
+
+- Local development with self-signed certificates
+- Debugging SSL issues
+- Testing against localhost
+
+==== Header Injection Prevention
+
+The plugin validates headers for newlines/carriage returns (executor.lua:92-99):
+
+[source,lua]
+----
+-- Invalid headers are skipped with warning
+if header_value:find('[\r\n]') then
+  vim.notify('Invalid header value contains newline', vim.log.levels.WARN)
+  -- Header skipped, not passed to curl
+end
+----
+
+This prevents command injection via malicious header values.
+
+==== Base64 Encoding Security
+
+Basic auth uses *pure Lua Base64 encoding* (auth.lua:13-31) instead of shell commands:
+
+.Insecure (old implementation):
+[source,lua]
+----
+-- VULNERABLE to shell injection
+local encoded = vim.fn.system('echo -n "' .. credentials .. '" | base64')
+----
+
+.Secure (current implementation):
+[source,lua]
+----
+-- Pure Lua, no shell execution
+local function base64_encode(str)
+  -- Implementation in auth.lua:13-31
+end
+----
+
+This eliminates shell injection risks in authentication.
+
+---
+
+== Document Revision History
+
+[cols="1,2,3,4"]
+|===
+|Version |Date |Author |Changes
+
+|1.0.0
+|2025-10-19
+|nrest.nvim Contributors
+|Initial architecture documentation with 4+1 View Model
+
+|===
+
+---
+
+== References
+
+- *4+1 View Model*: Kruchten, P. (1995). "The 4+1 View Model of Architecture"
+- *Neovim API*: https://neovim.io/doc/user/api.html
+- *AsciiDoc Syntax*: https://docs.asciidoctor.org/asciidoc/latest/syntax-quick-reference/
+- *PlantUML*: https://plantuml.com/
+- *nrest.nvim Repository*: https://github.com/nrest-nvim/nrest.nvim (if applicable)
+- *HTTP Semantics (RFC 9110)*: https://www.rfc-editor.org/rfc/rfc9110.html
+
+---
+
+[.text-center]
+_End of Architecture Documentation_

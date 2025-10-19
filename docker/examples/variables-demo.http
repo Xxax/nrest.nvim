@@ -1,0 +1,148 @@
+# 🔧 Variables Demo
+#
+# nrest.nvim supports two types of variables:
+#   1. User-defined variables: @name = value → use with {{name}}
+#   2. System environment variables: use with $VAR or ${VAR}
+#
+# 💡 Execute requests with <leader>hc
+
+# ====================================
+# User-Defined Variables
+# ====================================
+
+@baseUrl = https://httpbin.org
+@apiVersion = v1
+@userAgent = nrest.nvim/0.1.0
+
+### 1. Using Variables in URL
+GET {{baseUrl}}/get
+User-Agent: {{userAgent}}
+
+### 2. Variables in Headers
+@authToken = demo-bearer-token-12345
+
+GET {{baseUrl}}/bearer
+Authorization: Bearer {{authToken}}
+
+### 3. Variables in Request Body
+@userName = John Doe
+@userEmail = john@example.com
+
+POST {{baseUrl}}/post
+Content-Type: application/json
+
+{
+  "name": "{{userName}}",
+  "email": "{{userEmail}}",
+  "api_version": "{{apiVersion}}"
+}
+
+# ====================================
+# System Environment Variables
+# ====================================
+
+### 4. Using System Environment Variables
+# These read from your shell environment
+# Common examples: $USER, $HOME, $PATH
+GET {{baseUrl}}/get?user=$USER
+
+### 5. Environment Variables in Headers
+# You can use ${VAR} syntax for clarity
+GET {{baseUrl}}/headers
+X-User: $USER
+X-Home: ${HOME}
+X-Shell: ${SHELL}
+
+# ====================================
+# Combining Variable Types
+# ====================================
+
+### 6. User Variables Referencing System Vars
+# User-defined variables can reference system environment variables
+@myToken = Bearer-$USER-Token
+@myPath = ${HOME}/api/data
+
+GET {{baseUrl}}/get
+Authorization: {{myToken}}
+X-Data-Path: {{myPath}}
+
+# ====================================
+# Variable Substitution Order
+# ====================================
+# 1. System environment variables are substituted first ($VAR)
+# 2. User-defined variables are substituted second ({{var}})
+#
+# This allows user variables to reference system variables!
+
+@endpoint = {{baseUrl}}/api/{{apiVersion}}
+@fullAuth = Bearer $USER
+
+### 7. Complex Variable Usage
+POST {{endpoint}}/users
+Authorization: {{fullAuth}}
+Content-Type: application/json
+X-Request-ID: nrest-$USER-001
+
+{
+  "endpoint": "{{endpoint}}",
+  "user": "$USER",
+  "home": "${HOME}",
+  "token": "{{authToken}}"
+}
+
+# ====================================
+# Environment Files (.env.http)
+# ====================================
+#
+# You can store variables in a separate .env.http file:
+#
+# .env.http:
+#   @apiKey = secret-key-12345
+#   @apiUrl = https://api.example.com
+#
+# Enable in config:
+#   require('nrest').setup({
+#     env_file = 'auto',  -- Auto-discover .env.http
+#   })
+#
+# Variable Priority:
+#   1. Variables in .http file (highest)
+#   2. Variables from .env.http
+#   3. System environment variables (lowest)
+
+# ====================================
+# Best Practices
+# ====================================
+#
+# ✅ DO:
+#   - Use {{var}} for user-defined variables
+#   - Use $VAR for system environment variables
+#   - Store secrets in .env.http (add to .gitignore!)
+#   - Use descriptive variable names
+#
+# ❌ DON'T:
+#   - Mix syntaxes ({{$VAR}} won't work)
+#   - Commit secrets to git
+#   - Use spaces in variable names
+#
+# 💡 Tips:
+#   - Variables work in URLs, headers, and body
+#   - Use 'auto' env_file for automatic .env.http discovery
+#   - System vars are great for user-specific values ($USER, $HOME)
+
+### 8. Testing Variable Substitution
+# This request shows all variable types in action
+@testVar = This is a user variable
+
+GET {{baseUrl}}/anything
+X-User-Var: {{testVar}}
+X-System-Var: $USER
+X-Combined: {{baseUrl}}-$USER
+Content-Type: application/json
+
+{
+  "user_defined": "{{testVar}}",
+  "system_user": "$USER",
+  "system_home": "${HOME}",
+  "combined": "{{baseUrl}}/api/$USER"
+}

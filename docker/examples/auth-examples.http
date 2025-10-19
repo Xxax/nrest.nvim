@@ -1,0 +1,226 @@
+# 🔐 Authentication Examples
+#
+# nrest.nvim supports multiple authentication methods:
+#   - Basic Auth
+#   - Bearer Token
+#   - API Key
+#   - Digest Auth
+#
+# 💡 Execute with <leader>hc
+
+# ====================================
+# Basic Authentication
+# ====================================
+
+### 1. Basic Auth - Simple Example
+# Syntax: @auth basic <username> <password>
+# This endpoint requires username "user" and password "passwd"
+GET https://httpbin.org/basic-auth/user/passwd
+@auth basic user passwd
+
+### 2. Basic Auth - Different Credentials
+# Try changing credentials to see 401 Unauthorized
+GET https://httpbin.org/basic-auth/admin/secret
+@auth basic admin secret
+
+### 3. Basic Auth with Variables
+@username = user
+@password = passwd
+
+GET https://httpbin.org/basic-auth/user/passwd
+@auth basic {{username}} {{password}}
+
+# ====================================
+# Bearer Token Authentication
+# ====================================
+
+### 4. Bearer Token - Simple
+# Syntax: @auth bearer <token>
+# Common for JWT tokens and OAuth 2.0
+GET https://httpbin.org/bearer
+@auth bearer my-secret-token-12345
+
+### 5. Bearer Token with Variable
+@myToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+
+GET https://httpbin.org/bearer
+@auth bearer {{myToken}}
+
+### 6. Bearer Token from Environment
+# Use system environment variable
+# Set in shell: export API_TOKEN=your-token
+GET https://httpbin.org/bearer
+@auth bearer $API_TOKEN
+
+# ====================================
+# API Key Authentication
+# ====================================
+
+### 7. API Key - Custom Header
+# Syntax: @auth apikey <header-name> <api-key-value>
+# Many APIs use X-API-Key, X-Api-Key, or custom headers
+GET https://httpbin.org/headers
+@auth apikey X-API-Key sk-proj-abc123def456
+
+### 8. API Key with Different Header Name
+GET https://httpbin.org/headers
+@auth apikey X-Custom-API-Key my-custom-key-789
+
+### 9. API Key with Variable
+@apiKey = sk-live-12345abcdef
+
+GET https://httpbin.org/headers
+@auth apikey X-API-Key {{apiKey}}
+
+# ====================================
+# Digest Authentication
+# ====================================
+
+### 10. Digest Auth
+# Syntax: @auth digest <username> <password>
+# More secure than Basic Auth (uses challenge-response)
+GET https://httpbin.org/digest-auth/auth/user/passwd
+@auth digest user passwd
+
+### 11. Digest Auth - QOP Auth-Int
+# Quality of Protection with auth-int
+GET https://httpbin.org/digest-auth/auth-int/user/passwd
+@auth digest user passwd
+
+# ====================================
+# File-Level Authentication
+# ====================================
+# You can define auth once at the file level
+# It will apply to ALL requests below it
+
+# Uncomment to enable file-level auth:
+# @auth bearer global-token-for-all-requests
+
+### 12. First Request (would use file-level auth)
+GET https://httpbin.org/bearer
+
+### 13. Second Request (would also use file-level auth)
+GET https://httpbin.org/headers
+
+# ====================================
+# Request-Scoped Authentication
+# ====================================
+# Request-scoped auth OVERRIDES file-level auth
+# This allows different auth per request
+
+@auth bearer file-level-token
+
+### 14. Uses File-Level Auth
+GET https://httpbin.org/bearer
+
+### 15. Overrides with Request-Scoped Auth
+GET https://httpbin.org/bearer
+@auth bearer request-specific-token
+
+### 16. Back to File-Level Auth
+GET https://httpbin.org/bearer
+
+# ====================================
+# Authentication with Variables
+# ====================================
+
+@token = my-bearer-token
+@apiKey = my-api-key
+@user = testuser
+@pass = testpass
+
+### 17. Bearer with Variable
+GET https://httpbin.org/bearer
+@auth bearer {{token}}
+
+### 18. API Key with Variable
+GET https://httpbin.org/headers
+@auth apikey X-API-Key {{apiKey}}
+
+### 19. Basic Auth with Variables
+GET https://httpbin.org/basic-auth/testuser/testpass
+@auth basic {{user}} {{pass}}
+
+# ====================================
+# Real-World Examples
+# ====================================
+
+### 20. GitHub API with Bearer Token
+# Set your GitHub token: export GITHUB_TOKEN=ghp_...
+# Then use it in the auth directive
+GET https://api.github.com/user
+@auth bearer $GITHUB_TOKEN
+
+### 21. API with Custom API Key Header
+@apiEndpoint = https://httpbin.org
+
+GET {{apiEndpoint}}/headers
+@auth apikey X-RapidAPI-Key your-rapidapi-key-here
+
+### 22. Multiple Auth Methods Demo
+# Shows that each request can have different auth
+
+# First: Basic Auth
+GET https://httpbin.org/basic-auth/user/passwd
+@auth basic user passwd
+
+# Second: Bearer Token
+GET https://httpbin.org/bearer
+@auth bearer demo-token
+
+# Third: API Key
+GET https://httpbin.org/headers
+@auth apikey X-API-Key custom-key
+
+# Fourth: Digest Auth
+GET https://httpbin.org/digest-auth/auth/user/passwd
+@auth digest user passwd
+
+# ====================================
+# Security Best Practices
+# ====================================
+#
+# ✅ DO:
+#   - Store tokens in .env.http file (add to .gitignore)
+#   - Use environment variables for secrets
+#   - Use HTTPS (not HTTP) for authentication
+#   - Rotate tokens regularly
+#
+# ❌ DON'T:
+#   - Commit tokens/passwords to git
+#   - Use HTTP for authenticated requests
+#   - Share .env.http files
+#   - Hardcode production credentials
+#
+# 💡 Recommended Setup:
+#
+# .env.http (add to .gitignore):
+#   @prodToken = Bearer sk-prod-...
+#   @devToken = Bearer sk-dev-...
+#   @apiKey = your-api-key
+#
+# requests.http:
+#   GET https://api.example.com/data
+#   @auth bearer {{prodToken}}
+#
+# ====================================
+# Auth Implementation Notes
+# ====================================
+#
+# Basic Auth:
+#   - Uses pure Lua Base64 encoding (security hardened)
+#   - No shell commands (prevents injection attacks)
+#   - Adds header: Authorization: Basic <base64(user:pass)>
+#
+# Bearer Token:
+#   - Adds header: Authorization: Bearer <token>
+#   - Common for OAuth 2.0 and JWT
+#
+# API Key:
+#   - Adds custom header: <header-name>: <api-key>
+#   - Flexible for any API key header format
+#
+# Digest Auth:
+#   - Uses curl's --digest flag
+#   - More secure than Basic Auth
+#   - Challenge-response mechanism

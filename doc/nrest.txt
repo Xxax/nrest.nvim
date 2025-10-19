@@ -821,7 +821,7 @@ ABOUT                                                            *nrest-about*
 Author:         Matthias
 Repository:     https://gitlab.ttu.ch/matthias/nrest.git
 License:        MIT License
-Version:        1.0.0
+Version:        0.1.0
 
 Inspired by VS Code's REST Client extension.
 

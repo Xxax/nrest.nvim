@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2025-10-19
+
 ### Added
 - Comprehensive test suite with plenary.nvim for parser, variables, and auth modules (69 tests)
 - LuaDoc API documentation for all public functions
@@ -18,23 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD pipeline (.github/workflows/test.yml) for automated testing
   - Tests across Neovim 0.8.0, 0.9.0, 0.10.0, stable, nightly
 - Header value validation to prevent command injection
-
-### Changed
-- **BREAKING**: Removed unused `result_split_in_place` configuration option
-- Refactored `init.lua` to eliminate code duplication (~100 LOC reduction)
-- Improved callback safety with race condition guard in executor
-
-### Security
-- **CRITICAL FIX**: Replaced shell-based Base64 encoding with pure Lua implementation to prevent shell injection vulnerability in Basic Auth
-- Added header value validation to prevent potential command injection via newline characters
-
-### Fixed
-- Callback race condition between timeout and on_exit handlers
-- Potential double invocation of response callback
-
-## [1.0.0] - 2025-01-XX (Estimated from git history)
-
-### Added
 - Request-scoped authentication support (per-request `@auth` directives)
 - Header folding support for response display
 - Auto-discovery feature for `.env.http` files
@@ -57,45 +42,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - snacks.nvim and AstroNvim compatibility
 - Zero Lua dependencies (only requires curl)
 
-## [0.1.0] - 2025-01-XX (Initial Release)
+### Changed
+- **BREAKING**: Removed unused `result_split_in_place` configuration option
+- Refactored `init.lua` to eliminate code duplication (~100 LOC reduction)
+- Improved callback safety with race condition guard in executor
 
-### Added
-- Initial implementation of nrest.nvim
-- Basic HTTP request parsing from `.http` files
-- curl-based request execution
-- Response display in split windows
-- Basic syntax highlighting
-- Configurable keybindings
+### Security
+- **CRITICAL FIX**: Replaced shell-based Base64 encoding with pure Lua implementation to prevent shell injection vulnerability in Basic Auth
+- Added header value validation to prevent potential command injection via newline characters
+
+### Fixed
+- Callback race condition between timeout and on_exit handlers
+- Potential double invocation of response callback
 
 ---
 
 ## Version History Notes
 
-**Unreleased**: Security fixes, test infrastructure, and code quality improvements
-**1.0.0**: Full-featured REST client with auth, variables, and advanced features
-**0.1.0**: Initial proof-of-concept
+**0.1.0**: Initial release with comprehensive features, security hardening, and test infrastructure
 
 ---
 
 ## Migration Guides
 
-### Upgrading to Unreleased (from 1.0.0)
-
-**Configuration Changes:**
-```lua
--- REMOVED: result_split_in_place option (was not implemented)
-require('nrest').setup({
-  result_split_in_place = false,  -- Remove this line
-})
-```
-
-**Security Notes:**
-- Basic Auth now uses pure Lua Base64 encoding (no external dependencies)
-- No user action required, but credentials are now safer from shell injection
-
-**Testing:**
-- New test suite available in `tests/` directory
-- Run with: `nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/"`
+This is the initial release of nrest.nvim. No migration needed.
 
 ---
 

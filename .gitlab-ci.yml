@@ -126,22 +126,23 @@ build:docker-demo:
     - docker run --rm $IMAGE_NAME:latest ls -la /home/nvim/demo/
     - echo "Pushing Docker image to registry..."
     - docker push $IMAGE_NAME:latest
+    - echo "Docker image published successfully!"
+    - echo "Pull with docker pull $IMAGE_NAME:latest"
+  after_script:
     - echo "Cleaning up old images..."
-    - apk add --no-cache curl jq
+    - apk add --no-cache curl jq || true
     - |
-      REPO_ID=$(curl -s -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories" | jq -r '.[] | select(.path | contains("demo")) | .id')
+      REPO_ID=$(curl -s -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories" | jq -r '.[] | select(.path | contains("demo")) | .id' 2>/dev/null || echo "")
       if [ -n "$REPO_ID" ]; then
         echo "Found demo repository ID: $REPO_ID"
-        curl -s -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories/$REPO_ID/tags" | jq -r '.[].name' | grep -v "^latest$" | while read tag; do
+        curl -s -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories/$REPO_ID/tags" 2>/dev/null | jq -r '.[].name' | grep -v "^latest$" | while read tag; do
           echo "Deleting old tag: $tag"
-          curl -X DELETE -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories/$REPO_ID/tags/$tag" || true
+          curl -X DELETE -H "PRIVATE-TOKEN: $CI_JOB_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/registry/repositories/$REPO_ID/tags/$tag" 2>/dev/null || true
         done
         echo "Cleanup completed - only 'latest' tag remains"
       else
-        echo "Demo repository not found - this is the first build"
+        echo "Demo repository not found or first build - skipping cleanup"
       fi
-    - echo "Docker image published successfully!"
-    - echo "Pull with: docker pull $IMAGE_NAME:latest"
   only:
     - main
   tags:

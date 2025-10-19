@@ -821,16 +821,17 @@ ABOUT                                                            *nrest-about*
 Author:         Matthias
 Repository:     https://gitlab.ttu.ch/matthias/nrest.git
 License:        MIT License
-Version:        0.1.1
+Version:        0.1.2
 
 Inspired by VS Code's REST Client extension.
 
 For bug reports and feature requests, please visit:
-https://gitlab.ttu.ch/matthias/nrest/-/issues
+https://github.com/Xxax/nrest.nvim/issues
 
 Contributing:
 Contributions are welcome! Please read CLAUDE.md and .ai-assistant/RULES.md
 before submitting pull requests.
+Pull Requests: https://github.com/Xxax/nrest.nvim/pulls
 
 Similar Projects:
   • rest.nvim - Another REST client for Neovim

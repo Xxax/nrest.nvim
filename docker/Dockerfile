@@ -5,7 +5,7 @@ FROM alpine:latest
 
 LABEL maintainer="Matthias"
 LABEL description="Interactive demo environment for nrest.nvim - HTTP REST client for Neovim"
-LABEL version="0.1.1"
+LABEL version="0.1.2"
 
 # Install dependencies
 RUN apk add --no-cache \

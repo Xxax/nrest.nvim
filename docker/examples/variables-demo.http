@@ -12,7 +12,7 @@
 
 @baseUrl = https://httpbin.org
 @apiVersion = v1
-@userAgent = nrest.nvim/0.1.1
+@userAgent = nrest.nvim/0.1.2
 
 ### 1. Using Variables in URL
 GET {{baseUrl}}/get

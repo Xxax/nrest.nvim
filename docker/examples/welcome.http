@@ -20,8 +20,8 @@ Accept: application/json
 
 ### 2. GET with Query Parameters
 # URLs with query parameters work seamlessly
-GET https://httpbin.org/get?name=nrest&version=0.1.1
-User-Agent: nrest.nvim/0.1.1
+GET https://httpbin.org/get?name=nrest&version=0.1.2
+User-Agent: nrest.nvim/0.1.2
 
 ### 3. GET with Custom Headers
 # Add any headers you need
@@ -39,7 +39,7 @@ Accept: application/json
 {
   "message": "Hello from nrest.nvim!",
   "plugin": "nrest.nvim",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "features": ["fast", "lightweight", "zero dependencies"]
 }
 
@@ -85,7 +85,7 @@ GET https://httpbin.org/ip
 ### 11. User Agent Echo
 # The server echoes back your user agent
 GET https://httpbin.org/user-agent
-User-Agent: nrest.nvim-demo/0.1.1
+User-Agent: nrest.nvim-demo/0.1.2
 
 ### 12. Delay Response (Timeout Test)
 # This request waits 2 seconds before responding

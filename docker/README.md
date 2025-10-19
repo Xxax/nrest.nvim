@@ -32,7 +32,7 @@ docker-compose down
 ## 📚 What's Included
 
 - **Neovim** (latest stable from Alpine Linux)
-- **nrest.nvim** (v0.1.2) - Pre-configured and ready to use
+- **nrest.nvim** (v0.1.3) - Pre-configured and ready to use
 - **Dependencies**: curl, jq, git
 - **Plugin Manager**: lazy.nvim
 - **Theme**: Tokyo Night
@@ -75,10 +75,10 @@ When you start the container, Neovim opens with `welcome.http`:
 
 ```vim
 " Execute request under cursor
-<leader>hc        " Space + h + c
+<leader>rc        " Space + r + c
 
 " Execute first request in file
-<leader>hr        " Space + h + r
+<leader>rr        " Space + r + r
 
 " Or use commands
 :NrestRunCursor
@@ -121,8 +121,8 @@ The container includes these demo files in `/home/nvim/demo/`:
 ### nrest.nvim
 | Key | Action |
 |-----|--------|
-| `<leader>hc` | Run request under cursor |
-| `<leader>hr` | Run first request in file |
+| `<leader>rc` | Run request under cursor |
+| `<leader>rr` | Run first request in file |
 
 ### General Neovim
 | Key | Action |
@@ -201,7 +201,7 @@ Content-Type: application/json
 
 {
   "message": "Hello from nrest.nvim!",
-  "version": "0.1.2"
+  "version": "0.1.3"
 }
 ```
 
@@ -334,7 +334,7 @@ MIT License - see LICENSE file for details
 
 - **Repository**: https://gitlab.ttu.ch/matthias/nrest
 - **Issues**: https://gitlab.ttu.ch/matthias/nrest/-/issues
-- **Release**: https://gitlab.ttu.ch/matthias/nrest/-/releases/v0.1.2
+- **Release**: https://gitlab.ttu.ch/matthias/nrest/-/releases/v0.1.3
 - **Documentation**: Run `:help nrest` in the container
 
 ## 💡 Next Steps

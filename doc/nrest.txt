@@ -105,7 +105,7 @@ QUICK START                                                *nrest-quickstart*
 
 3. Execute the request:
    - Place cursor on the request
-   - Press `<leader>hc` (or use |:NrestRunCursor|)
+   - Press `<leader>rc` (or use |:NrestRunCursor|)
    - View the response in the split window
 
 ==============================================================================
@@ -125,8 +125,8 @@ KEYBINDINGS                                                *nrest-keybindings*
 
 Default keybindings (customizable in |nrest-configuration|):
 
-  <leader>hr            Run first request in file (same as |:NrestRun|)
-  <leader>hc            Run request under cursor (same as |:NrestRunCursor|)
+  <leader>rr            Run first request in file (same as |:NrestRun|)
+  <leader>rc            Run request under cursor (same as |:NrestRunCursor|)
 
 In response buffer (when folding is enabled):
   za                    Toggle fold under cursor
@@ -159,8 +159,8 @@ Configure nrest.nvim using the `setup()` function:
       folding = true,
     },
     keybindings = {
-      run_request = '<leader>hr',
-      run_request_under_cursor = '<leader>hc',
+      run_request = '<leader>rr',
+      run_request_under_cursor = '<leader>rc',
     },
   })
 <
@@ -234,10 +234,10 @@ result                          (table)
 keybindings                     (table)
     Customize keybindings for request execution.
 
-    keybindings.run_request              (string, default: '<leader>hr')
+    keybindings.run_request              (string, default: '<leader>rr')
         Keybinding to run first request in file.
 
-    keybindings.run_request_under_cursor (string, default: '<leader>hc')
+    keybindings.run_request_under_cursor (string, default: '<leader>rc')
         Keybinding to run request under cursor.
 
 Configuration Examples ~
@@ -821,7 +821,7 @@ ABOUT                                                            *nrest-about*
 Author:         Matthias
 Repository:     https://gitlab.ttu.ch/matthias/nrest.git
 License:        MIT License
-Version:        0.1.2
+Version:        0.1.3
 
 Inspired by VS Code's REST Client extension.
 

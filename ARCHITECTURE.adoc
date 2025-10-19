@@ -610,7 +610,7 @@ package "nrest.nvim" {
 
 package "User Interface Layer" {
   [Commands\n:NrestRun\n:NrestRunCursor]
-  [Keymaps\n<leader>hc]
+  [Keymaps\n<leader>rc]
   [Syntax Highlighting]
 }
 
@@ -637,7 +637,7 @@ package "External Dependencies" {
 }
 
 [Commands\n:NrestRun\n:NrestRunCursor] --> [init.lua\nOrchestration]
-[Keymaps\n<leader>hc] --> [init.lua\nOrchestration]
+[Keymaps\n<leader>rc] --> [init.lua\nOrchestration]
 
 [init.lua\nOrchestration] --> [parser.lua\nParsing]
 [init.lua\nOrchestration] --> [executor.lua\nExecution]
@@ -1201,7 +1201,7 @@ Developer -> Neovim : Opens test.http
 activate Neovim
 
 Developer -> Neovim : Types:\n###\nGET https://httpbin.org/get
-Developer -> Neovim : Presses <leader>hc
+Developer -> Neovim : Presses <leader>rc
 
 Neovim -> nrest : :NrestRunCursor
 activate nrest
@@ -1649,15 +1649,15 @@ Content-Type: application/json
 |Cursor Position |Action |Result
 
 |Line 2 (within first request)
-|Press `<leader>hc`
+|Press `<leader>rc`
 |Executes "Get User" request
 
 |Line 6 (within second request)
-|Press `<leader>hc`
+|Press `<leader>rc`
 |Executes "Get Repos" request
 
 |Line 13 (within third request)
-|Press `<leader>hc`
+|Press `<leader>rc`
 |Executes "Create Gist" with authentication
 
 |Anywhere
@@ -1724,7 +1724,7 @@ require('nrest').setup({
 
   -- Keybindings (buffer-local for .http files)
   keybindings = {
-    run_request = '<leader>hc',  -- Execute request at cursor
+    run_request = '<leader>rc',  -- Execute request at cursor
     run_all = '<leader>ha',      -- Execute first request
   },
 })
@@ -1782,7 +1782,7 @@ require('nrest').setup({
 
 |`keybindings.run_request`
 |string
-|Keymap to execute request at cursor (default: `<leader>hc`)
+|Keymap to execute request at cursor (default: `<leader>rc`)
 
 |`keybindings.run_all`
 |string

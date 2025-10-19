@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2025-10-19
+
+### Changed
+- **BREAKING:** Default keybindings changed from `<leader>h` to `<leader>r`
+  - `<leader>rr` - Run first request in file (was `<leader>hr`)
+  - `<leader>rc` - Run request under cursor (was `<leader>hc`)
+  - Rationale: Avoid conflicts with help plugins, `r` = **R**EST/**R**equest is more intuitive
+
+### Documentation
+- Updated all documentation with new keybindings
+- Updated README.md, doc/nrest.txt, CLAUDE.md, ARCHITECTURE.adoc
+- Updated all example files (docker/examples/*.http)
+- Updated Docker demo configuration (docker/nvim/init.lua)
+
 ## [0.1.2] - 2025-10-19
 
 ### Changed
@@ -98,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Notes
 
+**0.1.3**: Changed default keybindings to `<leader>r` (BREAKING CHANGE)
 **0.1.2**: Enable GitHub Issues and Pull Requests for community contributions
 **0.1.1**: GitHub mirror setup and infrastructure improvements
 **0.1.0**: Initial release with comprehensive features, security hardening, and test infrastructure

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  nrest:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: nrest-demo:latest
+    container_name: nrest-nvim-demo
+
+    # Interactive terminal
+    stdin_open: true
+    tty: true
+
+    # Environment variables (optional - customize as needed)
+    environment:
+      - TERM=xterm-256color
+      # Add your API tokens here for testing
+      # - API_TOKEN=your-token-here
+      # - GITHUB_TOKEN=ghp_your-token
+
+    # Mount volumes for persistent data (optional)
+    volumes:
+      # Uncomment to persist your custom .http files
+      # - ./my-requests:/home/nvim/my-requests:rw
+
+      # Uncomment to use custom Neovim config
+      # - ./custom-init.lua:/home/nvim/.config/nvim/init.lua:ro
+
+      # Uncomment to share .env.http with host
+      # - ./.env.http:/home/nvim/demo/.env.http:ro
+
+    # Network configuration
+    network_mode: bridge
+
+    # Resource limits (optional - adjust as needed)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1.0'
+    #       memory: 512M
+    #     reservations:
+    #       cpus: '0.5'
+    #       memory: 256M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "nvim", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Command to run (default from Dockerfile: nvim welcome.http)
+    # command: nvim welcome.http
+
+    # Labels
+    labels:
+      com.nrest.description: "nrest.nvim interactive demo environment"
+      com.nrest.version: "0.1.0"
+      com.nrest.vendor: "Matthias"

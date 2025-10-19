@@ -125,6 +125,27 @@ require('nrest').setup({
 })
 ```
 
+## 🐳 Try with Docker
+
+Want to test nrest.nvim without installing anything? Use our Docker demo environment:
+
+```bash
+# Pull and run the demo container
+docker pull gitlab.ttu.ch:5050/matthias/nrest/demo:latest
+docker run -it gitlab.ttu.ch:5050/matthias/nrest/demo:latest
+
+# The container starts with Neovim and 80+ example requests ready to execute
+# Press <Space>hc to run a request under cursor
+```
+
+**What's included:**
+- ✅ Neovim + nrest.nvim pre-configured
+- ✅ 80+ example HTTP requests (GET, POST, auth, variables, etc.)
+- ✅ All dependencies (curl, jq)
+- ✅ Interactive tutorial files
+
+See [docker/README.md](docker/README.md) for detailed usage instructions.
+
 ## Usage
 
 ### Creating HTTP Request Files

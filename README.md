@@ -1,6 +1,7 @@
 # nrest.nvim
 
-[![pipeline status](https://gitlab.ttu.ch/matthias/nrest/badges/main/pipeline.svg)](https://gitlab.ttu.ch/matthias/nrest/-/commits/main)
+[![GitLab Pipeline](https://gitlab.ttu.ch/matthias/nrest/badges/main/pipeline.svg)](https://gitlab.ttu.ch/matthias/nrest/-/commits/main)
+[![GitHub Mirror](https://img.shields.io/badge/mirror-GitHub-blue)](https://github.com/Xxax/nrest.nvim)
 
 A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST Client extension.
 
@@ -23,10 +24,22 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 - 🔐 Security-hardened (pure Lua Base64, header validation)
 - 📚 Full LuaDoc API documentation
 
+## 📍 Repository Information
+
+**Primary development:** [GitLab](https://gitlab.ttu.ch/matthias/nrest)
+**GitHub Mirror:** [github.com/Xxax/nrest.nvim](https://github.com/Xxax/nrest.nvim) (read-only, auto-synced)
+
+- 🐛 **Issues:** Please open on [GitLab Issues](https://gitlab.ttu.ch/matthias/nrest/-/issues)
+- 🔀 **Pull Requests:** Please submit to [GitLab](https://gitlab.ttu.ch/matthias/nrest/-/merge_requests)
+- 📦 **Releases:** Available on both platforms (synced automatically)
+
+You can install from either repository - both URLs work with all Neovim plugin managers!
+
 ## Installation
 
 ### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 
+**Option 1: GitLab (primary)**
 ```lua
 {
   'https://gitlab.ttu.ch/matthias/nrest.git',
@@ -71,8 +84,22 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 }
 ```
 
+**Option 2: GitHub (mirror)**
+```lua
+{
+  'Xxax/nrest.nvim',
+  ft = 'http',
+  config = function()
+    require('nrest').setup({
+      -- Same configuration as above
+    })
+  end,
+}
+```
+
 ### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
+**Option 1: GitLab (primary)**
 ```lua
 use {
   'https://gitlab.ttu.ch/matthias/nrest.git',
@@ -105,16 +132,39 @@ use {
 }
 ```
 
+**Option 2: GitHub (mirror)**
+```lua
+use {
+  'Xxax/nrest.nvim',
+  ft = 'http',
+  config = function()
+    require('nrest').setup({
+      -- Same configuration as above
+    })
+  end,
+}
+```
+
 ### Manual Installation
 
 Clone the repository into your Neovim plugin directory:
 
+**Option 1: GitLab (primary)**
 ```bash
 # For Unix/Linux/macOS
 git clone https://gitlab.ttu.ch/matthias/nrest.git ~/.local/share/nvim/site/pack/plugins/start/nrest.nvim
 
 # For Windows
 git clone https://gitlab.ttu.ch/matthias/nrest.git %LOCALAPPDATA%\nvim-data\site\pack\plugins\start\nrest.nvim
+```
+
+**Option 2: GitHub (mirror)**
+```bash
+# For Unix/Linux/macOS
+git clone https://github.com/Xxax/nrest.nvim.git ~/.local/share/nvim/site/pack/plugins/start/nrest.nvim
+
+# For Windows
+git clone https://github.com/Xxax/nrest.nvim.git %LOCALAPPDATA%\nvim-data\site\pack\plugins\start\nrest.nvim
 ```
 
 Then add to your `init.lua`:

@@ -203,7 +203,7 @@ nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {min
    GET https://httpbin.org/get
    ```
 3. Open in Neovim: `nvim test.http`
-4. Execute with `<leader>hc` or `:NrestRunCursor`
+4. Execute with `<leader>rc` or `:NrestRunCursor`
 5. Check result buffer displays correctly
 
 **Health check:**

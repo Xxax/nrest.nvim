@@ -87,16 +87,16 @@ require("lazy").setup({
 
         -- Keybindings
         keybindings = {
-          run_request = '<leader>hr',
-          run_request_under_cursor = '<leader>hc',
+          run_request = '<leader>rr',
+          run_request_under_cursor = '<leader>rc',
         },
       })
 
       -- Print welcome message
       vim.defer_fn(function()
         print("🚀 nrest.nvim Demo Environment")
-        print("📖 Press <leader>hc to execute request under cursor")
-        print("📖 Press <leader>hr to execute first request")
+        print("📖 Press <leader>rc to execute request under cursor")
+        print("📖 Press <leader>rr to execute first request")
         print("💡 Use :NrestRunCursor or :NrestRun commands")
         print("❓ Run :checkhealth nrest for diagnostics")
       end, 100)
@@ -160,8 +160,8 @@ vim.api.nvim_create_user_command("NrestHelp", function()
   print("  :checkhealth nrest - Check plugin health")
   print("")
   print("Keybindings:")
-  print("  <leader>hr - Run first request")
-  print("  <leader>hc - Run request under cursor")
+  print("  <leader>rr - Run first request")
+  print("  <leader>rc - Run request under cursor")
   print("")
   print("Example Request:")
   print("  ### My Request")

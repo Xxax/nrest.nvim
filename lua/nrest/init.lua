@@ -26,8 +26,8 @@ M.config = {
   -- Set to nil to disable env file loading
   -- Custom keybindings
   keybindings = {
-    run_request = '<leader>hr',
-    run_request_under_cursor = '<leader>hc',
+    run_request = '<leader>rr',
+    run_request_under_cursor = '<leader>rc',
   },
 }
 

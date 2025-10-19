@@ -76,8 +76,8 @@ You can install from either repository - both URLs work with all Neovim plugin m
 
       -- Keybindings
       keybindings = {
-        run_request = '<leader>hr',
-        run_request_under_cursor = '<leader>hc',
+        run_request = '<leader>rr',
+        run_request_under_cursor = '<leader>rc',
       },
     })
   end,
@@ -124,8 +124,8 @@ use {
         folding = true,
       },
       keybindings = {
-        run_request = '<leader>hr',
-        run_request_under_cursor = '<leader>hc',
+        run_request = '<leader>rr',
+        run_request_under_cursor = '<leader>rc',
       },
     })
   end,
@@ -223,8 +223,8 @@ Accept: application/json
 
 ### Executing Requests
 
-- **Run request under cursor**: Press `<leader>hc` (or use `:NrestRunCursor`)
-- **Run first request in file**: Press `<leader>hr` (or use `:NrestRun`)
+- **Run request under cursor**: Press `<leader>rc` (or use `:NrestRunCursor`)
+- **Run first request in file**: Press `<leader>rr` (or use `:NrestRun`)
 
 The response will be displayed in a split window with:
 - HTTP status line
@@ -462,8 +462,8 @@ require('nrest').setup({
 
   -- Keybindings
   keybindings = {
-    run_request = '<leader>hr',              -- Run first request in file
-    run_request_under_cursor = '<leader>hc', -- Run request under cursor
+    run_request = '<leader>rr',              -- Run first request in file
+    run_request_under_cursor = '<leader>rc', -- Run request under cursor
   },
 })
 ```

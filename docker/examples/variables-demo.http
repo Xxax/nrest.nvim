@@ -4,7 +4,7 @@
 #   1. User-defined variables: @name = value → use with {{name}}
 #   2. System environment variables: use with $VAR or ${VAR}
 #
-# 💡 Execute requests with <leader>hc
+# 💡 Execute requests with <leader>rc
 
 # ====================================
 # User-Defined Variables
@@ -12,7 +12,7 @@
 
 @baseUrl = https://httpbin.org
 @apiVersion = v1
-@userAgent = nrest.nvim/0.1.2
+@userAgent = nrest.nvim/0.1.3
 
 ### 1. Using Variables in URL
 GET {{baseUrl}}/get

@@ -60,5 +60,5 @@ services:
     # Labels
     labels:
       com.nrest.description: "nrest.nvim interactive demo environment"
-      com.nrest.version: "0.1.1"
+      com.nrest.version: "0.1.2"
       com.nrest.vendor: "Matthias"

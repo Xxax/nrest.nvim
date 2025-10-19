@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2025-10-19
+
+### Changed
+- **Community Contributions:** GitHub Issues and Pull Requests now primary (removed redirect templates)
+- README.md updated to direct users to GitHub for issues and PRs
+- Lower barrier for contributors - no GitLab account required
+
+### Removed
+- GitHub issue redirect template (`.github/ISSUE_TEMPLATE.md`)
+- GitHub pull request redirect template (`.github/PULL_REQUEST_TEMPLATE.md`)
+
+### Documentation
+- Added GitLab settings guide (`temp/gitlab-settings.md`)
+- Documented workflow for GitHub-based community contributions
+- Issues: https://github.com/Xxax/nrest.nvim/issues
+- Pull Requests: https://github.com/Xxax/nrest.nvim/pulls
+
 ## [0.1.1] - 2025-10-19
 
 ### Added
@@ -81,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Notes
 
+**0.1.2**: Enable GitHub Issues and Pull Requests for community contributions
 **0.1.1**: GitHub mirror setup and infrastructure improvements
 **0.1.0**: Initial release with comprehensive features, security hardening, and test infrastructure
 

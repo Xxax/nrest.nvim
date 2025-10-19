@@ -49,7 +49,7 @@ Content-Type: application/json
     }
   },
   "metadata": {
-    "version": "0.1.1",
+    "version": "0.1.2",
     "timestamp": "2025-10-19T00:00:00Z",
     "tags": ["demo", "advanced", "nested"]
   }
@@ -226,7 +226,7 @@ GET https://httpbin.org/etag/test-etag-123
 # ====================================
 
 ### 28. Set Cookies
-GET https://httpbin.org/cookies/set?name=nrest&version=0.1.1
+GET https://httpbin.org/cookies/set?name=nrest&version=0.1.2
 
 ### 29. Get Cookies
 GET https://httpbin.org/cookies
@@ -270,7 +270,7 @@ GET https://httpbin.org/drip?duration=2&numbytes=100
 ### 36. GitHub API - Public Repo Info
 GET https://api.github.com/repos/neovim/neovim
 Accept: application/vnd.github.v3+json
-User-Agent: nrest.nvim/0.1.1
+User-Agent: nrest.nvim/0.1.2
 
 ### 37. JSONPlaceholder - Sample Posts
 GET https://jsonplaceholder.typicode.com/posts/1

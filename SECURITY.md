@@ -136,6 +136,19 @@ Ensure your `.gitignore` includes:
 
 ### 🔍 Regular Security Audits
 
+**Automated CI/CD Scanning:**
+
+The GitLab CI/CD pipeline automatically runs security scans on every push and merge request:
+
+- **Gitleaks**: Scans for leaked credentials and secrets
+- **SAST (Static Application Security Testing)**: Analyzes code for security vulnerabilities
+- **Secret Detection**: GitLab's built-in secret scanner
+- **Dependency Scanning**: Checks for vulnerable dependencies
+
+View security reports in GitLab: `Security & Compliance` → `Vulnerability Report`
+
+**Manual Security Audits:**
+
 Run these commands regularly:
 
 ```bash

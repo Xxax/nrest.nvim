@@ -6,6 +6,7 @@ image: alpine:latest
 # Define stages
 stages:
   - test
+  - security
   - build
 
 # Cache dependencies between jobs
@@ -104,6 +105,60 @@ check:health:
     - docker
     - linux
   allow_failure: true
+
+# ============================================
+# Security Scanning Stage
+# ============================================
+
+# Secret Detection - Scan for leaked credentials
+secrets-detection:
+  stage: security
+  image: zricethezav/gitleaks:latest
+  script:
+    - echo "🔍 Scanning for secrets with gitleaks..."
+    - gitleaks detect --verbose --redact --config .gitleaks.toml
+  only:
+    - branches
+    - merge_requests
+  tags:
+    - docker
+  allow_failure: false  # Block pipeline if secrets are found
+
+# SAST (Static Application Security Testing)
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+
+# Override SAST settings for Lua
+semgrep-sast:
+  stage: security
+  only:
+    - branches
+    - merge_requests
+  tags:
+    - docker
+  allow_failure: true  # Don't block on SAST findings initially
+
+# Override Secret Detection settings
+secret_detection:
+  stage: security
+  only:
+    - branches
+    - merge_requests
+  tags:
+    - docker
+  allow_failure: false  # Block if secrets detected
+
+# Dependency scanning (checks for vulnerable dependencies)
+gemnasium-dependency_scanning:
+  stage: security
+  only:
+    - branches
+    - merge_requests
+  tags:
+    - docker
+  allow_failure: true  # Don't block on dependency issues
 
 # Build and publish Docker demo image (only on main branch)
 build:docker-demo:

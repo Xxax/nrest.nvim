@@ -1,0 +1,24 @@
+# Gitleaks ignore file
+# Patterns to ignore false positives
+
+# Demo/Example tokens (clearly marked as examples)
+docker/examples/.env.http:demoToken
+docker/examples/.env.http:apiKey
+examples/.env.http.example:glpat-your-real-token-here
+examples/.env.http.example:your-token-here
+examples/.env.http.example:your-api-key-here
+examples/.env.http.example:your-gitlab-token-here
+examples/.env.http.example:sk_live_your-api-key-here
+
+# Test files with example tokens
+**/*.example:*
+**/examples/**/*.http:demo-*
+**/examples/**/*.http:test-*
+**/examples/**/*.http:example-*
+
+# Documentation examples
+README.md:token123
+README.md:abc123
+README.md:demo-token
+CLAUDE.md:token123
+doc/nrest.txt:token123

@@ -749,17 +749,42 @@ nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {min
 - Optional: Tests against latest Neovim from source (main branch only)
 - Optional: Luacheck linting on merge requests
 
+## Security
+
+⚠️ **IMPORTANT**: Never commit secrets (API tokens, passwords) to git!
+
+**Use environment variables:**
+```http
+GET https://api.example.com/data
+Authorization: Bearer $API_TOKEN
+```
+
+**Or use .env.http files (gitignored):**
+```http
+# .env.http (NOT committed)
+@API_TOKEN = your-real-token
+
+# api.http (safe to commit)
+GET https://api.example.com/data
+Authorization: Bearer {{API_TOKEN}}
+```
+
+📚 **Read our security guide**: [SECURITY.md](SECURITY.md)
+
+🔒 **Setup secret protection**: [docs/SETUP-SECURITY.md](docs/SETUP-SECURITY.md)
+
 ## Contributing
 
 Contributions are welcome! Please:
 1. Read `CLAUDE.md` and `.ai-assistant/RULES.md` first
-2. Run the test suite and ensure all tests pass
-3. Add tests for new features
-4. Test changes manually with `.http` files
-5. Run `:checkhealth nrest` to verify setup
-6. Ensure compatibility with Neovim >= 0.8.0
-7. Update `CHANGELOG.md` with your changes
-8. Submit a Pull Request with clear description
+2. **Set up security tools** (see [docs/SETUP-SECURITY.md](docs/SETUP-SECURITY.md))
+3. Run the test suite and ensure all tests pass
+4. Add tests for new features
+5. Test changes manually with `.http` files
+6. Run `:checkhealth nrest` to verify setup
+7. Ensure compatibility with Neovim >= 0.8.0
+8. Update `CHANGELOG.md` with your changes
+9. Submit a Pull Request with clear description
 
 **Before submitting:**
 ```bash

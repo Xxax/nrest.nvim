@@ -1,0 +1,81 @@
+#!/bin/bash
+# Pre-commit hook to prevent committing secrets
+# Install: ln -s ../../.githooks/pre-commit .git/hooks/pre-commit
+
+set -e
+
+echo "🔍 Checking for secrets before commit..."
+
+# Check if gitleaks is installed
+if command -v gitleaks &> /dev/null; then
+    echo "  → Running gitleaks..."
+    if ! gitleaks protect --staged --verbose --redact --config .gitleaks.toml; then
+        echo ""
+        echo "❌ COMMIT BLOCKED: Potential secrets detected!"
+        echo ""
+        echo "If this is a false positive:"
+        echo "  1. Add pattern to .gitleaksignore"
+        echo "  2. Or add to allowlist in .gitleaks.toml"
+        echo "  3. Run: git commit --no-verify (NOT RECOMMENDED)"
+        echo ""
+        exit 1
+    fi
+    echo "  ✅ No secrets detected by gitleaks"
+else
+    echo "  ⚠️  gitleaks not installed - skipping"
+    echo "  Install with: brew install gitleaks (macOS) or go install github.com/gitleaks/gitleaks/v8@latest"
+fi
+
+# Check for common patterns manually
+echo "  → Checking for common secret patterns..."
+
+# Check for .env.http files (except allowed ones)
+if git diff --cached --name-only | grep -E '\.env\.http$' | grep -v 'docker/examples/' | grep -v '\.example$'; then
+    echo ""
+    echo "❌ COMMIT BLOCKED: .env.http file detected!"
+    echo "  → .env.http files should not be committed (may contain secrets)"
+    echo "  → Use .env.http.example instead"
+    echo "  → Ensure .env.http is in .gitignore"
+    echo ""
+    exit 1
+fi
+
+# Check for hardcoded GitLab tokens in staged files (excluding .example files and allowlisted patterns)
+DETECTED_TOKENS=$(git diff --cached --diff-filter=ACMR -- ':!*.example' ':!.gitleaksignore' | grep -iE 'glpat-[a-zA-Z0-9_-]{20,}' | grep -v 'glpat-your-' || true)
+if [ -n "$DETECTED_TOKENS" ]; then
+    echo ""
+    echo "❌ COMMIT BLOCKED: GitLab token detected!"
+    echo "  → Remove the token and use environment variables instead"
+    echo "  → Detected tokens:"
+    echo "$DETECTED_TOKENS" | sed 's/^/    /'
+    echo ""
+    exit 1
+fi
+
+# Check for common secret keywords in new/modified lines
+SUSPICIOUS_PATTERNS=(
+    "password\s*=\s*['\"][^'\"]{8,}"
+    "secret\s*=\s*['\"][^'\"]{8,}"
+    "private_key"
+    "-----BEGIN.*PRIVATE KEY-----"
+)
+
+for pattern in "${SUSPICIOUS_PATTERNS[@]}"; do
+    if git diff --cached -- ':!.githooks/pre-commit' ':!*.example' | grep -iE "$pattern"; then
+        echo ""
+        echo "⚠️  WARNING: Potential secret pattern detected: $pattern"
+        echo "  → Review your changes carefully"
+        echo "  → Consider using environment variables"
+        echo ""
+        read -p "Continue anyway? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    fi
+done
+
+echo "  ✅ Manual secret check passed"
+echo ""
+echo "✅ All pre-commit checks passed!"
+echo ""

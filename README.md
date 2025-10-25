@@ -188,7 +188,7 @@ docker pull gitlab.ttu.ch:5050/matthias/nrest/demo:latest
 docker run -it gitlab.ttu.ch:5050/matthias/nrest/demo:latest
 
 # The container starts with Neovim and 80+ example requests ready to execute
-# Press <Space>hc to run a request under cursor
+# Press <Space>rc to run a request under cursor
 ```
 
 **What's included:**

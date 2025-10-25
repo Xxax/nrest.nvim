@@ -130,34 +130,18 @@ include:
   - template: Security/Secret-Detection.gitlab-ci.yml
   - template: Security/Dependency-Scanning.gitlab-ci.yml
 
-# Override SAST settings for Lua
+# Override SAST settings - extend existing rules
 semgrep-sast:
-  stage: security
-  only:
-    - branches
-    - merge_requests
-  tags:
-    - docker
+  variables:
+    SAST_EXCLUDED_PATHS: "tests/,docker/"
   allow_failure: true  # Don't block on SAST findings initially
 
-# Override Secret Detection settings
+# Override Secret Detection settings - extend existing rules
 secret_detection:
-  stage: security
-  only:
-    - branches
-    - merge_requests
-  tags:
-    - docker
   allow_failure: false  # Block if secrets detected
 
-# Dependency scanning (checks for vulnerable dependencies)
+# Override Dependency scanning - extend existing rules
 gemnasium-dependency_scanning:
-  stage: security
-  only:
-    - branches
-    - merge_requests
-  tags:
-    - docker
   allow_failure: true  # Don't block on dependency issues
 
 # Build and publish Docker demo image (only on main branch)

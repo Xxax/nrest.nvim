@@ -1,24 +1,11 @@
 # Gitleaks ignore file
-# Patterns to ignore false positives
+# Use fingerprints from gitleaks findings to ignore false positives
+# Format: path:ruleID:lineNumber
 
-# Demo/Example tokens (clearly marked as examples)
-docker/examples/.env.http:demoToken
-docker/examples/.env.http:apiKey
-examples/.env.http.example:glpat-your-real-token-here
-examples/.env.http.example:your-token-here
-examples/.env.http.example:your-api-key-here
-examples/.env.http.example:your-gitlab-token-here
-examples/.env.http.example:sk_live_your-api-key-here
+# Example/placeholder tokens in documentation and templates
+examples/.env.http.example:gitlab-pat:12
+SECURITY.md:gitlab-pat:31
+ARCHITECTURE.adoc:curl-auth-header:1425
 
-# Test files with example tokens
-**/*.example:*
-**/examples/**/*.http:demo-*
-**/examples/**/*.http:test-*
-**/examples/**/*.http:example-*
-
-# Documentation examples
-README.md:token123
-README.md:abc123
-README.md:demo-token
-CLAUDE.md:token123
-doc/nrest.txt:token123
+# .env.http in current working directory (user's local file, not tracked)
+.env.http:env-http-file:4

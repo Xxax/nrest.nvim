@@ -61,7 +61,7 @@ SUSPICIOUS_PATTERNS=(
 )
 
 for pattern in "${SUSPICIOUS_PATTERNS[@]}"; do
-    if git diff --cached -- ':!.githooks/pre-commit' ':!*.example' | grep -iE "$pattern"; then
+    if git diff --cached -- ':!.githooks/pre-commit' ':!*.example' | grep -iE -- "$pattern"; then
         echo ""
         echo "⚠️  WARNING: Potential secret pattern detected: $pattern"
         echo "  → Review your changes carefully"

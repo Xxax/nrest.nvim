@@ -1,0 +1,59 @@
+# Pre-commit hooks to prevent committing secrets
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Detect secrets using gitleaks
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+
+  # Detect secrets using detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package.lock.json
+
+  # General checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Prevent committing to main directly
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+
+      # Check for files that would conflict in case-insensitive filesystems
+      - id: check-case-conflict
+
+      # Check for merge conflicts
+      - id: check-merge-conflict
+
+      # Check for large files
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+      # Detect private keys
+      - id: detect-private-key
+
+      # Check YAML files
+      - id: check-yaml
+        args: ['--unsafe']
+
+      # Check JSON files
+      - id: check-json
+
+      # Trim trailing whitespace
+      - id: trailing-whitespace
+
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+
+  # Check for hardcoded secrets in code
+  - repo: https://github.com/sirwart/ripsecrets
+    rev: v0.1.7
+    hooks:
+      - id: ripsecrets

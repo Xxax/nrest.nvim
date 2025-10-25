@@ -1,0 +1,78 @@
+# Gitleaks configuration for nrest.nvim
+title = "nrest.nvim security scan"
+
+[extend]
+# Use default gitleaks rules
+useDefault = true
+
+[[rules]]
+id = "gitlab-pat"
+description = "GitLab Personal Access Token"
+regex = '''glpat-[0-9a-zA-Z_\-]{20,}'''
+tags = ["key", "gitlab"]
+
+[[rules]]
+id = "gitlab-pipeline-trigger-token"
+description = "GitLab Pipeline Trigger Token"
+regex = '''glptt-[0-9a-f]{40}'''
+tags = ["key", "gitlab"]
+
+[[rules]]
+id = "gitlab-runner-registration-token"
+description = "GitLab Runner Registration Token"
+regex = '''GR1348941[0-9a-zA-Z_\-]{20,}'''
+tags = ["key", "gitlab"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey)['":\s]*[=:]\s*['"][0-9a-zA-Z\-_]{20,}['"]'''
+tags = ["key", "api"]
+
+[[rules]]
+id = "bearer-token"
+description = "Bearer Token (only in non-example files)"
+regex = '''(?i)bearer\s+[a-zA-Z0-9\-_]{20,}'''
+tags = ["token", "bearer"]
+# Only flag if not in example/demo files
+[rules.allowlist]
+paths = [
+  '''.*\.example$''',
+  '''examples/.*''',
+  '''docker/examples/.*''',
+  '''tests/.*_spec\.lua''',
+  '''README\.md''',
+  '''CLAUDE\.md''',
+  '''doc/.*'''
+]
+
+[[rules]]
+id = "env-http-file"
+description = "Environment HTTP file with potential secrets"
+regex = '''@[A-Z_]+TOKEN\s*=\s*[a-zA-Z0-9\-_]{20,}'''
+tags = ["env", "token"]
+path = '''\.env\.http$'''
+[rules.allowlist]
+paths = [
+  '''.*\.example$''',
+  '''docker/examples/.*'''
+]
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''.gitleaks.toml''',
+  '''.gitleaksignore''',
+  '''.pre-commit-config.yaml''',
+]
+
+# Ignore demo/example values
+regexes = [
+  '''demo-token''',
+  '''example-token''',
+  '''test-token''',
+  '''your-token-here''',
+  '''abc123''',
+  '''token123''',
+  '''secret123''',
+]

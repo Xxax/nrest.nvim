@@ -114,6 +114,8 @@ check:health:
 secrets-detection:
   stage: security
   image: alpine:latest
+  variables:
+    GIT_STRATEGY: clone  # Force fresh clone to avoid cached old history
   before_script:
     - apk add --no-cache git curl
     # Install gitleaks

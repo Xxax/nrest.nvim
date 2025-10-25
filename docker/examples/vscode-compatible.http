@@ -3,7 +3,7 @@
 # This file demonstrates nrest.nvim's compatibility with VS Code REST Client syntax.
 # All examples here work in both VS Code REST Client AND nrest.nvim!
 #
-# ⌨️  Execute: Place cursor on request and press <leader>rc (Space + h + c)
+# ⌨️  Execute: Place cursor on request and press <leader>rc (Space + r + c)
 
 ### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ### 1️⃣  REQUEST NAMING

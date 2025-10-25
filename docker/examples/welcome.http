@@ -4,7 +4,7 @@
 #
 # ⌨️  Quick Start:
 #   - Place cursor on any request below
-#   - Press <leader>rc (Space + h + c) to execute
+#   - Press <leader>rc (Space + r + c) to execute
 #   - Or use :NrestRunCursor command
 #
 # 📚 More Commands:

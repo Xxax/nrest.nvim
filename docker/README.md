@@ -189,7 +189,7 @@ require('nrest').setup({
    Accept: application/json
    ```
 
-3. **Execute**: Press `<Space>hc` (leader + h + c)
+3. **Execute**: Press `<Space>rc` (leader + r + c)
 
 4. **View Response**: The response appears in a split window with:
    - HTTP status line

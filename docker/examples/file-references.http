@@ -3,7 +3,7 @@
 # This demonstrates the file reference feature (< operator)
 # which is compatible with VS Code REST Client!
 #
-# ⌨️  Execute: Place cursor on request and press <leader>rc (Space + h + c)
+# ⌨️  Execute: Place cursor on request and press <leader>rc (Space + r + c)
 
 ### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ### 1️⃣  SIMPLE FILE REFERENCE

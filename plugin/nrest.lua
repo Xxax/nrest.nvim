@@ -15,9 +15,10 @@ vim.api.nvim_create_user_command('NrestRunCursor', function()
   require('nrest').run_at_cursor()
 end, { desc = 'Run HTTP request under cursor' })
 
--- Define filetype detection for .http files
+-- Define filetype detection for .http and .rest files
 vim.filetype.add({
   extension = {
     http = 'http',
+    rest = 'http', -- vscode-restclient compatibility
   },
 })

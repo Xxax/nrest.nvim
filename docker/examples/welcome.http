@@ -101,6 +101,8 @@ GET https://httpbin.org/status/200
 GET https://httpbin.org/uuid
 
 # 📖 Next Steps:
+#   - Open vscode-compatible.http to see VS Code REST Client compatible features! 🔥
+#   - Open file-references.http to see file inclusion examples
 #   - Open variables-demo.http to learn about variables
 #   - Open auth-examples.http to learn about authentication
 #   - Open advanced.http for advanced features
@@ -112,5 +114,13 @@ GET https://httpbin.org/uuid
 #   ✅ JSON response formatting
 #   ✅ Async execution
 #   ✅ Multiple requests in one file
+#
+# 🆕 New in v0.2.0:
+#   ✅ VS Code REST Client compatibility
+#   ✅ Request naming (# @name)
+#   ✅ Multiline query parameters
+#   ✅ File references (< ./file.json)
+#   ✅ Standard Authorization headers
+#   ✅ .rest file extension support
 #
 # Happy testing! 🎉

@@ -229,4 +229,83 @@ describe('parser', function()
       end)
     end
   end)
+
+  describe('multiline query parameters', function()
+    it('should parse query parameters with ?', function()
+      local lines = {
+        'GET https://example.com/api',
+        '?page=1',
+        '&limit=10',
+      }
+      local req = parser.parse_request(lines)
+
+      assert.is_not_nil(req)
+      assert.equals('GET', req.method)
+      assert.is_truthy(req.url:match('page=1'))
+      assert.is_truthy(req.url:match('limit=10'))
+    end)
+
+    it('should append query params when URL already has params', function()
+      local lines = {
+        'GET https://example.com/api?search=test',
+        '?page=1',
+        '&limit=10',
+      }
+      local req = parser.parse_request(lines)
+
+      assert.is_not_nil(req)
+      assert.is_truthy(req.url:match('search=test'))
+      assert.is_truthy(req.url:match('page=1'))
+      assert.is_truthy(req.url:match('limit=10'))
+    end)
+
+    it('should parse query params before headers', function()
+      local lines = {
+        'GET https://example.com/api',
+        '?page=1',
+        'Accept: application/json',
+      }
+      local req = parser.parse_request(lines)
+
+      assert.is_not_nil(req)
+      assert.is_truthy(req.url:match('page=1'))
+      assert.equals('application/json', req.headers['Accept'])
+    end)
+  end)
+
+  describe('request naming', function()
+    it('should parse request name with # @name', function()
+      local lines = {
+        '# @name getUserById',
+        'GET https://example.com/users/123',
+      }
+      local req = parser.parse_request(lines)
+
+      assert.is_not_nil(req)
+      assert.equals('getUserById', req.name)
+      assert.equals('GET', req.method)
+    end)
+
+    it('should parse request name with // @name', function()
+      local lines = {
+        '// @name createUser',
+        'POST https://example.com/users',
+      }
+      local req = parser.parse_request(lines)
+
+      assert.is_not_nil(req)
+      assert.equals('createUser', req.name)
+      assert.equals('POST', req.method)
+    end)
+
+    it('should handle request without name', function()
+      local lines = {
+        'GET https://example.com',
+      }
+      local req = parser.parse_request(lines)
+
+      assert.is_not_nil(req)
+      assert.is_nil(req.name)
+    end)
+  end)
 end)

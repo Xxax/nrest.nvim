@@ -104,6 +104,47 @@ function M.parse_auth_line(line)
   }, nil
 end
 
+--- Parse standard Authorization header (vscode-restclient compatible)
+--- Detects and parses Authorization headers with special syntax
+--- @param request table Request object to check and modify
+--- @return boolean modified True if Authorization header was parsed
+function M.parse_standard_auth_header(request)
+  if not request.headers['Authorization'] then
+    return false
+  end
+
+  local auth_value = request.headers['Authorization']
+
+  -- Parse "Basic username:password" or "Basic username password"
+  local basic_user, basic_pass = auth_value:match('^Basic%s+([^:%s]+):([^%s]+)$')
+  if not basic_user then
+    basic_user, basic_pass = auth_value:match('^Basic%s+([^%s]+)%s+([^%s]+)$')
+  end
+  if basic_user and basic_pass then
+    -- Convert to base64 encoded format
+    local credentials = basic_user .. ':' .. basic_pass
+    local encoded = base64_encode(credentials)
+    request.headers['Authorization'] = 'Basic ' .. encoded
+    return true
+  end
+
+  -- Parse "Digest username password"
+  local digest_user, digest_pass = auth_value:match('^Digest%s+([^%s]+)%s+([^%s]+)$')
+  if digest_user and digest_pass then
+    -- Store digest credentials for curl
+    request.digest_auth = {
+      username = digest_user,
+      password = digest_pass,
+    }
+    -- Remove Authorization header (curl will handle it)
+    request.headers['Authorization'] = nil
+    return true
+  end
+
+  -- All other formats (Bearer, API keys, etc.) are already standard
+  return false
+end
+
 --- Apply authentication to request
 --- Modifies request.headers or request.digest_auth based on auth type
 --- @param request table Request object to modify

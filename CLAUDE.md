@@ -21,7 +21,7 @@ This file contains CRITICAL rules for:
 
 ## Project Overview
 
-**nrest.nvim** is a Neovim plugin that provides a REST client for executing HTTP requests directly from `.http` files. It's inspired by VS Code's REST Client extension and uses curl for request execution with zero Lua dependencies.
+**nrest.nvim** is a Neovim plugin that provides a REST client for executing HTTP requests directly from `.http` or `.rest` files. It's inspired by VS Code's REST Client extension with extensive compatibility support and uses curl for request execution with zero Lua dependencies.
 
 **Requirements:**
 - Neovim >= 0.8.0
@@ -29,11 +29,18 @@ This file contains CRITICAL rules for:
 - jq in PATH (optional, for JSON formatting)
 
 **Quality Assurance:**
-- 33+ automated test cases (parser, variables, auth modules)
+- 80+ automated test cases (parser, variables, auth modules)
 - CI/CD pipeline testing Neovim 0.8.0 through nightly
 - Security-hardened implementation (pure Lua Base64, header validation)
 - Full LuaDoc API documentation
 - Health check system (`:checkhealth nrest`)
+
+**VS Code REST Client Compatibility:**
+- `.http` and `.rest` file extensions
+- Multiline query parameters (`?` and `&` prefix)
+- File references (`< ./file.json`)
+- Request naming (`# @name requestName`, `// @name requestName`)
+- Standard Authorization headers (Basic, Digest, Bearer)
 
 ## Architecture
 
@@ -89,14 +96,21 @@ tests/
 **Request Parsing (parser.lua):**
 - Detects request separators (`###`)
 - Parses HTTP method line: `METHOD URL`
+- **Multiline query parameters**: Parses lines starting with `?` or `&` after method line
+- **Request naming**: Parses `# @name` or `// @name` directives before method line
 - Extracts headers: `Header-Name: value`
+- **File references**: Resolves `< ./file.json` in request bodies (inline or standalone)
 - Body starts after empty line, ends at next request/separator
 - Tracks line ranges for cursor-based execution
 - Skips auth directives (`@auth`) and variable definitions (`@var =`) during parsing
 
 **Authentication (auth.lua):**
 - Parses auth directives: `@auth <type> <params...>`
-- Supported types: `basic`, `bearer`, `apikey`, `digest`
+- **Standard Authorization headers (VS Code compatible)**:
+  - `Authorization: Basic user:password` → Auto-encodes to base64
+  - `Authorization: Digest user password` → Sets up curl digest auth
+  - `Authorization: Bearer token` → Passes through unchanged
+- Supported `@auth` types: `basic`, `bearer`, `apikey`, `digest`
 - **Basic Auth**:
   - **SECURITY**: Uses pure Lua Base64 encoding (auth.lua:13-31) to prevent shell injection
   - Previous implementation used `vim.fn.system('echo -n ... | base64')` which was vulnerable
@@ -104,7 +118,7 @@ tests/
 - **Bearer Token**: Adds `Authorization: Bearer <token>` header
 - **API Key**: Adds custom header with specified name and value
 - **Digest Auth**: Sets metadata in request for executor to use curl's `--digest` flag
-- Auth is applied globally to all requests in the file (file-level scope)
+- **Priority**: Request-scoped auth > file-level auth > standard Authorization header
 - **Variable substitution in auth**: Auth parameters are substituted in init.lua before applying auth
   - System env vars: `@auth bearer $GITLAB_TOKEN`
   - User vars: `@auth bearer {{myToken}}`
@@ -139,6 +153,7 @@ tests/
 - URL-encodes query parameters to handle spaces and special characters
 
 **Response Formatting (ui.lua):**
+- **Request naming**: Displays request name in response header if present
 - Detects JSON responses by Content-Type header or content inspection
 - Formats JSON with `jq` if available (via `vim.fn.system()`)
 - Falls back to raw response if jq is not installed or formatting fails
@@ -179,10 +194,10 @@ nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {min
 ```
 
 **Test Coverage:**
-- **parser_spec.lua** (25 tests): HTTP parsing, validation, multiple requests, line ranges
+- **parser_spec.lua** (31 tests): HTTP parsing, validation, multiple requests, line ranges, multiline query params, request naming
 - **variables_spec.lua** (24 tests): Variable parsing, substitution, env files, system vars
-- **auth_spec.lua** (20 tests): All auth types (basic, bearer, apikey, digest), validation
-- **Total**: 69 automated test cases (100% passing)
+- **auth_spec.lua** (25 tests): All auth types (basic, bearer, apikey, digest), standard Authorization headers, validation
+- **Total**: 80 automated test cases (100% passing)
 
 **CI/CD Pipelines:**
 - **GitLab CI/CD** (.gitlab-ci.yml):

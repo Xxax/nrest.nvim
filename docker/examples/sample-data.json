@@ -1,0 +1,25 @@
+{
+  "demo": "file-reference-example",
+  "plugin": "nrest.nvim",
+  "version": "0.2.0",
+  "features": {
+    "vscode_compatible": true,
+    "file_references": true,
+    "multiline_query_params": true,
+    "request_naming": true,
+    "standard_auth_headers": true
+  },
+  "message": "This JSON file was loaded using the < operator!",
+  "timestamp": "2025-10-25",
+  "nested": {
+    "data": {
+      "example": "You can include entire file contents in request bodies",
+      "use_case": "Perfect for large payloads, templates, or test data"
+    }
+  },
+  "array_example": [
+    "File references work with any text content",
+    "JSON, XML, HTML, plain text",
+    "Even binary files in multipart uploads!"
+  ]
+}

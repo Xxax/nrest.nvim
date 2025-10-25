@@ -32,28 +32,37 @@ docker-compose down
 ## 📚 What's Included
 
 - **Neovim** (latest stable from Alpine Linux)
-- **nrest.nvim** (v0.1.3) - Pre-configured and ready to use
+- **nrest.nvim** (v0.2.0) - Pre-configured and ready to use
 - **Dependencies**: curl, jq, git
 - **Plugin Manager**: lazy.nvim
 - **Theme**: Tokyo Night
 - **Status Line**: lualine.nvim
-- **Example Files**: 5+ demo .http files with 40+ request examples
+- **Example Files**: 7+ demo .http files with 80+ request examples
+- **🆕 VS Code REST Client compatible features!**
 
 ## 🎯 Features You Can Test
 
 ### ✅ Core Features
 - Execute HTTP requests (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
-- Syntax highlighting for .http files
+- Syntax highlighting for .http and .rest files
 - JSON response formatting with jq
 - Asynchronous request execution
 - Multiple requests per file
 - Request timeout handling
 
+### 🆕 VS Code REST Client Compatible (New in v0.2.0)
+- **Request naming**: `# @name requestName` or `// @name requestName`
+- **Multiline query parameters**: Lines starting with `?` or `&`
+- **File references**: Include file content with `< ./file.json`
+- **Standard Authorization headers**: `Authorization: Basic user:pass`
+- **.rest file extension**: Works with both `.http` and `.rest` files
+
 ### 🔐 Authentication
-- Basic Authentication
-- Bearer Token
+- Basic Authentication (both `@auth basic` and `Authorization: Basic`)
+- Bearer Token (both syntaxes supported)
 - API Key (custom headers)
-- Digest Authentication
+- Digest Authentication (both syntaxes supported)
+- Standard HTTP Authorization headers (VS Code compatible)
 
 ### 🔧 Variables
 - User-defined variables (`{{variableName}}`)
@@ -62,6 +71,7 @@ docker-compose down
 - Variable substitution in URLs, headers, and body
 
 ### 📊 Response Display
+- Request name display (when using `@name`)
 - Foldable headers section
 - Pretty-printed JSON
 - HTTP status and headers
@@ -96,10 +106,13 @@ When you start the container, Neovim opens with `welcome.http`:
 The container includes these demo files in `/home/nvim/demo/`:
 
 1. **welcome.http** - Quick start guide with 14 basic examples
-2. **variables-demo.http** - Variable usage (user-defined and system)
-3. **auth-examples.http** - All authentication methods with examples
-4. **advanced.http** - 40+ advanced features and real-world examples
-5. **.env.http** - Example environment variables file
+2. **🆕 vscode-compatible.http** - VS Code REST Client compatible features showcase
+3. **🆕 file-references.http** - File inclusion examples with sample data
+4. **variables-demo.http** - Variable usage (user-defined and system)
+5. **auth-examples.http** - All authentication methods with examples
+6. **advanced.http** - 40+ advanced features and real-world examples
+7. **.env.http** - Example environment variables file
+8. **sample-data.json** - Sample JSON file for file reference demos
 
 ### Navigation
 
@@ -214,10 +227,37 @@ GET {{baseUrl}}/bearer
 Authorization: Bearer {{token}}
 ```
 
-### Authentication
+### Authentication (Multiple Syntaxes)
 ```http
+# nrest syntax
 GET https://httpbin.org/basic-auth/user/passwd
 @auth basic user passwd
+
+# VS Code compatible syntax
+GET https://httpbin.org/basic-auth/user/passwd
+Authorization: Basic user:passwd
+```
+
+### 🆕 Request Naming
+```http
+# @name getMyIP
+GET https://httpbin.org/ip
+```
+
+### 🆕 Multiline Query Parameters
+```http
+GET https://httpbin.org/get
+?foo=bar
+&baz=qux
+&page=1
+```
+
+### 🆕 File References
+```http
+POST https://httpbin.org/post
+Content-Type: application/json
+
+< ./sample-data.json
 ```
 
 ## 🐛 Troubleshooting

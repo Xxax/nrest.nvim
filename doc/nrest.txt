@@ -23,16 +23,22 @@ INTRODUCTION                                              *nrest-introduction*
 
 nrest.nvim is a fast and lightweight HTTP REST client for Neovim, inspired
 by VS Code's REST Client extension. Execute HTTP requests directly from
-`.http` files with syntax highlighting and asynchronous request execution.
+`.http` or `.rest` files with syntax highlighting and asynchronous request
+execution.
 
 Features:
-  • Execute HTTP requests from .http files
+  • Execute HTTP requests from .http or .rest files
   • Simple and intuitive syntax
+  • VS Code REST Client compatible (multiline query params, file refs, etc.)
   • Asynchronous request execution with timeout support
   • Syntax highlighting for requests and responses
   • Clean response display in split windows
   • Authentication presets (Basic, Bearer, API Key, Digest)
+  • Standard Authorization headers (VS Code compatible)
   • Environment variable support
+  • File references for request bodies (< ./file.json)
+  • Request naming (# @name requestName)
+  • Multiline query parameters
   • Request validation
   • Automatic redirect handling
   • Zero external Lua dependencies (uses curl)
@@ -96,7 +102,7 @@ Then add to your `init.lua`:
 ==============================================================================
 QUICK START                                                *nrest-quickstart*
 
-1. Create a file with the `.http` extension
+1. Create a file with the `.http` or `.rest` extension
 2. Write an HTTP request:
 >http
   ### My first request
@@ -301,6 +307,23 @@ Example:
   Request body goes here
 <
 
+Request Naming ~                                         *nrest-request-naming*
+
+Name your requests for better organization using `# @name` or `// @name`:
+>http
+  # @name getUserById
+  GET https://api.example.com/users/123
+
+  // @name createUser
+  POST https://api.example.com/users
+  Content-Type: application/json
+
+  {"name": "John Doe"}
+<
+
+Request names are displayed in the response buffer for easy identification.
+This is VS Code REST Client compatible syntax.
+
 Request Separators ~                                     *nrest-request-separator*
 
 Use `###` to separate multiple requests in the same file:
@@ -314,6 +337,52 @@ Use `###` to separate multiple requests in the same file:
 
   {"name": "John"}
 <
+
+Multiline Query Parameters ~                            *nrest-query-params*
+
+Spread query parameters across multiple lines for better readability:
+>http
+  GET https://api.example.com/search
+  ?query=neovim
+  &category=plugins
+  &sort=stars
+  &limit=10
+<
+
+This is equivalent to:
+>http
+  GET https://api.example.com/search?query=neovim&category=plugins&sort=stars&limit=10
+<
+
+This is VS Code REST Client compatible syntax.
+
+File References ~                                        *nrest-file-references*
+
+Include file content in request bodies using the `<` operator:
+>http
+  ### Upload JSON data
+  POST https://api.example.com/data
+  Content-Type: application/json
+
+  < ./payload.json
+<
+
+For multipart file uploads:
+>http
+  ### Multipart upload
+  POST https://api.example.com/upload
+  Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+  ------WebKitFormBoundary
+  Content-Disposition: form-data; name="file"; filename="data.json"
+  Content-Type: application/json
+
+  < ./data.json
+  ------WebKitFormBoundary--
+<
+
+File paths are relative to the current `.http` file or can be absolute.
+This is VS Code REST Client compatible syntax.
 
 Supported HTTP Methods ~                                 *nrest-http-methods*
 
@@ -455,8 +524,34 @@ IMPORTANT: Don't mix syntaxes!
 ==============================================================================
 AUTHENTICATION                                          *nrest-authentication*
 
-nrest.nvim supports common authentication methods with simple directives.
-Authentication can be applied per-request or globally to all requests.
+nrest.nvim supports common authentication methods with simple directives AND
+standard Authorization headers (VS Code REST Client compatible). Authentication
+can be applied per-request or globally to all requests.
+
+Standard Authorization Headers ~                         *nrest-standard-auth*
+
+Use standard HTTP Authorization headers (VS Code REST Client compatible):
+
+Basic Authentication:
+>http
+  GET https://httpbin.org/basic-auth/user/passwd
+  Authorization: Basic user:passwd
+<
+
+Digest Authentication:
+>http
+  GET https://httpbin.org/digest-auth/auth/user/passwd
+  Authorization: Digest user passwd
+<
+
+Bearer Token:
+>http
+  GET https://api.example.com/protected
+  Authorization: Bearer your-token-here
+<
+
+These are automatically detected and processed. Basic and Digest auth
+credentials are encoded/handled appropriately.
 
 Request-Scoped Authentication ~                          *nrest-request-auth*
 
@@ -484,7 +579,12 @@ Define authentication at the file level to apply to ALL requests:
   GET https://api.example.com/posts
 <
 
-NOTE: Request-scoped auth overrides file-level auth.
+Authentication Priority ~                                *nrest-auth-priority*
+
+Authentication is applied in this order (highest to lowest):
+  1. Request-scoped @auth directive
+  2. File-level @auth directive
+  3. Standard Authorization header
 
 Authentication Types ~                                    *nrest-auth-types*
 
@@ -754,7 +854,7 @@ TROUBLESHOOTING                                        *nrest-troubleshooting*
 Request Not Found ~
 
 If you see "No valid HTTP request found":
-  • Ensure the file has `.http` extension
+  • Ensure the file has `.http` or `.rest` extension
   • Check that the method line format is correct: `METHOD URL`
   • Verify that the URL starts with `http://` or `https://`
   • Make sure cursor is within a request block when using |:NrestRunCursor|
@@ -821,9 +921,9 @@ ABOUT                                                            *nrest-about*
 Author:         Matthias
 Repository:     https://gitlab.ttu.ch/matthias/nrest.git
 License:        MIT License
-Version:        0.1.3
+Version:        0.2.0
 
-Inspired by VS Code's REST Client extension.
+Inspired by VS Code's REST Client extension with extensive compatibility.
 
 For bug reports and feature requests, please visit:
 https://github.com/Xxax/nrest.nvim/issues

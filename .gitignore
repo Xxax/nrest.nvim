@@ -16,7 +16,7 @@ test.http
 # Environment files (may contain secrets)
 .env.http
 *.env.http
-!examples/.env.http
+!docker/examples/.env.http
 
 # Temporary files
 *.tmp

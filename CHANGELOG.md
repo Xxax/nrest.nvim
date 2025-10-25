@@ -7,6 +7,135 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-10-25
+
+### Added - VS Code REST Client Compatibility 🎉
+
+#### Request Naming
+- Support for `# @name requestName` and `// @name requestName` directives
+- Request names are displayed in response buffer for easy identification
+- Fully compatible with VS Code REST Client syntax
+
+#### Multiline Query Parameters
+- Lines starting with `?` or `&` after the HTTP method are parsed as query parameters
+- Cleaner, more readable request files
+- Parameters are automatically combined into the final URL
+- Example:
+  ```http
+  GET https://api.example.com/search
+  ?query=neovim
+  &category=plugins
+  &limit=10
+  ```
+
+#### File References
+- Include file content in request bodies using `< ./file.json` syntax
+- Works for entire body replacement or inline (e.g., multipart uploads)
+- Supports relative paths (to .http file) and absolute paths
+- Compatible with VS Code REST Client file inclusion
+
+#### Standard Authorization Headers
+- `Authorization: Basic user:password` - automatically base64 encoded
+- `Authorization: Digest user password` - sets up curl digest auth
+- `Authorization: Bearer token` - passes through unchanged
+- Works alongside existing `@auth` directives
+- Priority: `@auth` directive > file-level `@auth` > standard Authorization header
+
+#### .rest File Extension Support
+- Plugin now recognizes both `.http` and `.rest` file extensions
+- Full compatibility with VS Code REST Client file naming
+
+### Changed
+
+#### Parser Enhancements
+- `lua/nrest/parser.lua`:
+  - Added `_resolve_file_references()` function for file inclusion
+  - Added multiline query parameter parsing after method line
+  - Added request naming support with `# @name` and `// @name`
+  - Request objects now include `name` field
+
+#### Authentication Improvements
+- `lua/nrest/auth.lua`:
+  - Added `parse_standard_auth_header()` for VS Code compatible headers
+  - Standard Authorization headers are automatically detected and processed
+  - Basic Auth headers are base64 encoded automatically
+  - Digest Auth headers set up curl digest authentication
+
+#### UI Updates
+- `lua/nrest/ui.lua`:
+  - Request names are displayed in response buffer when present
+  - Format: `# Request: requestName` at the top of response
+
+#### Plugin Initialization
+- `plugin/nrest.lua`:
+  - Added `.rest` extension to filetype detection
+  - Both `.http` and `.rest` files now use `http` filetype
+
+### Testing
+
+#### New Tests
+- **Parser**: 6 new tests for multiline query params and request naming (31 total)
+- **Auth**: 5 new tests for standard Authorization headers (25 total)
+- **Total**: 80 automated tests (all passing)
+
+### Documentation
+
+#### Updated Documentation
+- `README.md`:
+  - Added VS Code compatibility section
+  - Documented all new features with examples
+  - Updated feature list and roadmap
+  - Added "Recently Completed (v0.2.0)" section
+
+- `CLAUDE.md`:
+  - Updated architecture documentation
+  - Added implementation details for new features
+  - Updated test coverage statistics
+
+- `doc/nrest.txt`:
+  - Added sections for all VS Code compatible features
+  - Updated examples and usage instructions
+  - Version bumped to 0.2.0
+
+#### Docker Demo Updates
+- Added `docker/examples/vscode-compatible.http` - comprehensive VS Code features showcase
+- Added `docker/examples/file-references.http` - file inclusion examples
+- Added `docker/examples/sample-data.json` - sample data for file reference demos
+- Updated `docker/examples/welcome.http` with v0.2.0 feature overview
+- Updated `docker/README.md` with new features and examples
+
+### Backward Compatibility
+
+All changes are backward compatible:
+- Existing `@auth` directives continue to work
+- All existing `.http` files work without modifications
+- New features are optional and don't affect existing functionality
+- Both syntaxes can be mixed in the same file
+
+### Migration Guide
+
+No migration required! All existing `.http` files continue to work.
+
+To use new features:
+- Rename files to `.rest` if desired (optional)
+- Add `# @name` directives for better organization (optional)
+- Use standard `Authorization` headers if preferred (optional)
+- Use `?` and `&` for multiline query params (optional)
+- Use `< ./file.json` for file references (optional)
+
+### VS Code Compatibility Status
+
+✅ **Implemented:**
+- Request naming (`# @name`, `// @name`)
+- Multiline query parameters (`?` and `&`)
+- File references (`< ./file.json`)
+- Standard Authorization headers (Basic, Digest, Bearer)
+- `.rest` file extension
+
+⏳ **Planned:**
+- Response variables (`{{requestName.response.body.$}}`)
+- GraphQL support
+
 ## [0.1.3] - 2025-10-19
 
 ### Changed

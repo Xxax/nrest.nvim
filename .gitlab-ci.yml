@@ -132,16 +132,25 @@ include:
 
 # Override SAST settings - extend existing rules
 semgrep-sast:
+  tags:
+    - docker
+    - linux
   variables:
     SAST_EXCLUDED_PATHS: "tests/,docker/"
   allow_failure: true  # Don't block on SAST findings initially
 
 # Override Secret Detection settings - extend existing rules
 secret_detection:
+  tags:
+    - docker
+    - linux
   allow_failure: false  # Block if secrets detected
 
 # Override Dependency scanning - extend existing rules
 gemnasium-dependency_scanning:
+  tags:
+    - docker
+    - linux
   allow_failure: true  # Don't block on dependency issues
 
 # Build and publish Docker demo image (only on main branch)

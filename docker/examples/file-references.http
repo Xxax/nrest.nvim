@@ -1,0 +1,130 @@
+# 📁 File References Demo
+#
+# This demonstrates the file reference feature (< operator)
+# which is compatible with VS Code REST Client!
+#
+# ⌨️  Execute: Place cursor on request and press <leader>rc (Space + h + c)
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 1️⃣  SIMPLE FILE REFERENCE
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Load entire file content as request body
+# The < operator includes the content of sample-data.json
+
+# @name uploadJsonFromFile
+POST https://httpbin.org/post
+Content-Type: application/json
+Accept: application/json
+
+< ./sample-data.json
+
+# The file content is loaded and sent as the request body
+# You can see the included content in the response
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 2️⃣  COMPARISON: INLINE vs FILE REFERENCE
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Traditional inline JSON (still works!)
+# @name inlineJson
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "method": "inline",
+  "data": "Written directly in the .http file"
+}
+
+# Same request using file reference
+# @name fileReferenceJson
+POST https://httpbin.org/post
+Content-Type: application/json
+
+< ./sample-data.json
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 3️⃣  COMBINING WITH OTHER FEATURES
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Combine file references with:
+# - Request naming
+# - Multiline query parameters
+# - Standard Authorization headers
+
+# @name fullFeaturedFileUpload
+POST https://httpbin.org/post
+?format=json
+?timestamp=2025-10-25
+Authorization: Bearer demo-token-xyz
+Content-Type: application/json
+Accept: application/json
+
+< ./sample-data.json
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 4️⃣  WHY USE FILE REFERENCES?
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Benefits:
+# ✅ Cleaner .http files (no huge JSON blobs)
+# ✅ Reuse the same payload across multiple requests
+# ✅ Share test data between VS Code and Neovim
+# ✅ Easier to maintain large payloads
+# ✅ Works with any file type (JSON, XML, text, etc.)
+
+# Example: Upload the same data to different endpoints
+# @name uploadToEndpoint1
+POST https://httpbin.org/post
+Content-Type: application/json
+
+< ./sample-data.json
+
+# @name uploadToEndpoint2
+PUT https://httpbin.org/put
+Content-Type: application/json
+
+< ./sample-data.json
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 5️⃣  MULTIPART FORM DATA (CONCEPT)
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# File references also work in multipart/form-data
+# This is especially useful for file uploads
+
+# Example structure (uncomment to try with real files):
+#
+# @name multipartFileUpload
+# POST https://httpbin.org/post
+# Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+#
+# ------WebKitFormBoundary
+# Content-Disposition: form-data; name="data"
+# Content-Type: application/json
+#
+# < ./sample-data.json
+# ------WebKitFormBoundary
+# Content-Disposition: form-data; name="description"
+#
+# This is a test upload using file references
+# ------WebKitFormBoundary--
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 💡 Tips:
+#   - File paths are relative to the .http file location
+#   - You can also use absolute paths: < /absolute/path/to/file.json
+#   - Works with .http AND .rest file extensions
+#   - 100% compatible with VS Code REST Client syntax
+#
+# 📚 Learn More:
+#   - See vscode-compatible.http for all VS Code features
+#   - See advanced.http for nrest-specific features
+#
+# 🎯 File Reference Status:
+#   ✅ Single file references (< ./file.json)
+#   ✅ Inline file references (for multipart)
+#   ✅ Relative and absolute paths
+#   ✅ Any file type supported
+#   ✅ VS Code REST Client compatible
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -7,8 +7,9 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 
 ## Features
 
-- 🚀 Execute HTTP requests directly from `.http` files
+- 🚀 Execute HTTP requests directly from `.http` or `.rest` files
 - 📝 Simple and intuitive syntax (inspired by VS Code REST Client)
+- 🔄 **VS Code REST Client compatible** (multiline query params, standard auth headers, file references)
 - 🎨 Syntax highlighting for requests and responses
 - ⚡ Asynchronous request execution with timeout support
 - 📊 Clean response display in split windows
@@ -16,10 +17,12 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 - 🔒 SSL certificate verification control
 - 🔐 Authentication presets (Basic, Bearer, API Key, Digest)
 - 🔑 Environment variable support (user-defined and system)
+- 📁 File references for request bodies (`< ./file.json`)
+- 🏷️ Request naming for better organization (`# @name requestName`)
 - ✅ Request validation (method, URL scheme, headers)
 - 🔄 Automatic redirect handling
 - 📦 Zero Lua dependencies (only requires curl)
-- 🧪 Comprehensive test suite with 33+ test cases
+- 🧪 Comprehensive test suite with 80+ test cases
 - 🏥 Built-in health check (`:checkhealth nrest`)
 - 🔐 Security-hardened (pure Lua Base64, header validation)
 - 📚 Full LuaDoc API documentation
@@ -200,7 +203,7 @@ See [docker/README.md](docker/README.md) for detailed usage instructions.
 
 ### Creating HTTP Request Files
 
-Create a file with the `.http` extension and write your HTTP requests:
+Create a file with the `.http` or `.rest` extension and write your HTTP requests:
 
 ```http
 ### Simple GET request
@@ -243,11 +246,96 @@ GET https://api.example.com/users
 GET https://api.example.com/posts
 ```
 
+### Request Naming (VS Code Compatible)
+
+Name your requests for better organization using `# @name` or `// @name`:
+
+```http
+# @name getUserById
+GET https://api.example.com/users/123
+
+// @name createUser
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "name": "John Doe"
+}
+```
+
+Request names are displayed in the response buffer for easy identification.
+
+### Multiline Query Parameters (VS Code Compatible)
+
+Spread query parameters across multiple lines for better readability:
+
+```http
+GET https://api.example.com/search
+?query=neovim
+&category=plugins
+&sort=stars
+&limit=10
+```
+
+This is equivalent to:
+```http
+GET https://api.example.com/search?query=neovim&category=plugins&sort=stars&limit=10
+```
+
+### File References (VS Code Compatible)
+
+Include file content in request bodies using the `<` operator:
+
+```http
+### Upload JSON data
+POST https://api.example.com/data
+Content-Type: application/json
+
+< ./payload.json
+
+### Multipart file upload
+POST https://api.example.com/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="data.json"
+Content-Type: application/json
+
+< ./data.json
+------WebKitFormBoundary--
+```
+
+File paths are relative to the current `.http` file or can be absolute.
+
 ### Authentication Presets
 
-nrest.nvim supports common authentication methods with simple directives. Authentication can be applied per-request or globally to all requests in a file.
+nrest.nvim supports common authentication methods with simple directives **and** VS Code REST Client compatible standard `Authorization` headers. Authentication can be applied per-request or globally to all requests in a file.
 
-#### Request-Scoped Authentication
+#### Standard Authorization Headers (VS Code Compatible)
+
+Use standard HTTP `Authorization` headers just like in VS Code REST Client:
+
+**Basic Authentication:**
+```http
+GET https://httpbin.org/basic-auth/user/passwd
+Authorization: Basic user:passwd
+```
+
+**Digest Authentication:**
+```http
+GET https://httpbin.org/digest-auth/auth/user/passwd
+Authorization: Digest user passwd
+```
+
+**Bearer Token:**
+```http
+GET https://api.example.com/protected
+Authorization: Bearer your-token-here
+```
+
+These are automatically detected and processed. Basic and Digest auth credentials are encoded/handled appropriately.
+
+#### Request-Scoped Authentication (nrest syntax)
 
 Apply authentication to individual requests by placing the `@auth` directive after the HTTP method line:
 
@@ -325,10 +413,12 @@ GET https://api.example.com/posts
 - `digest` - HTTP Digest Authentication (uses curl's --digest flag)
 
 **Notes:**
-- **Priority**: Request-scoped auth overrides file-level auth
+- **Priority**: Request-scoped auth > file-level auth > standard Authorization header
+- Both `@auth` directives and standard `Authorization` headers are supported
 - Auth directives can use variables (`{{var}}`) and system env vars (`$VAR`)
 - Variables are substituted before auth is applied
 - Digest auth is handled by curl and supports standard digest challenges
+- Standard Authorization headers are **VS Code REST Client compatible**
 
 ### Environment Variables
 
@@ -599,15 +689,21 @@ This will verify all dependencies and show your current configuration.
 
 **Planned Features:**
 - [ ] Request/response history
-- [ ] File references (`< ./file.json`)
+- [ ] Response variable references (`{{requestName.response.body.$}}`)
 - [ ] XML response formatting
 - [ ] GraphQL support
 - [ ] WebSocket support
 - [ ] Import from Postman/Insomnia collections
 - [ ] Custom response handlers/hooks
 
-**Recently Completed:**
-- [x] Comprehensive test suite (33+ test cases with plenary.nvim)
+**Recently Completed (v0.2.0):**
+- [x] **VS Code REST Client compatibility improvements**
+  - [x] File references (`< ./file.json`) in request bodies
+  - [x] Multiline query parameters (`?` and `&` prefix)
+  - [x] Request naming (`# @name requestName`)
+  - [x] Standard Authorization headers (Basic, Digest, Bearer)
+  - [x] `.rest` file extension support
+- [x] Comprehensive test suite (80+ test cases with plenary.nvim)
 - [x] Health check system (`:checkhealth nrest`)
 - [x] Security hardening (pure Lua Base64, header validation)
 - [x] Full LuaDoc API documentation
@@ -642,10 +738,10 @@ nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {min
 ```
 
 **Test Coverage:**
-- Parser module: 25 test cases
+- Parser module: 31 test cases (including multiline query params, request naming)
 - Variables module: 24 test cases
-- Auth module: 20 test cases
-- Total: 69 automated tests (all passing)
+- Auth module: 25 test cases (including standard Authorization headers)
+- Total: 80 automated tests (all passing)
 
 **CI/CD:**
 - GitLab CI/CD pipeline runs tests on every push/MR

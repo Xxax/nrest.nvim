@@ -99,7 +99,7 @@ local function _execute_request(request_parser_fn)
   request = variables.substitute_request(request, all_vars)
 
   -- Parse and apply authentication
-  -- Priority: request-scoped auth > file-level auth
+  -- Priority: request-scoped auth > file-level auth > standard Authorization header
   local auth_config, auth_error
 
   if request.auth_line then
@@ -128,6 +128,9 @@ local function _execute_request(request_parser_fn)
       vim.notify('Auth error: ' .. auth_apply_error, vim.log.levels.ERROR)
       return
     end
+  else
+    -- Check for vscode-restclient compatible Authorization header
+    auth.parse_standard_auth_header(request)
   end
 
   -- Validate request
@@ -140,6 +143,8 @@ local function _execute_request(request_parser_fn)
   -- Execute request
   vim.notify('Executing request...', vim.log.levels.INFO)
   executor.execute(request, function(response)
+    -- Add request name to response for display
+    response.request_name = request.name
     ui.show_response(response, M.config)
   end, M.config)
 end

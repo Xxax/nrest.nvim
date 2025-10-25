@@ -13,6 +13,51 @@ local VALID_METHODS = {
   TRACE = true,
 }
 
+--- Resolve file references in body content
+--- Supports vscode-restclient syntax: < ./file.json
+--- @param body string Body content potentially containing file references
+--- @return string body Resolved body content with file contents
+function M._resolve_file_references(body)
+  if not body then
+    return body
+  end
+
+  -- Check if the body is a single file reference
+  local file_ref = body:match('^%s*<%s*(.+)%s*$')
+  if file_ref then
+    -- Load entire file content
+    local file_path = vim.fn.expand(file_ref)
+    local file = io.open(file_path, 'r')
+    if file then
+      local content = file:read('*all')
+      file:close()
+      return content
+    else
+      vim.notify('Failed to read file: ' .. file_path, vim.log.levels.WARN)
+      return body
+    end
+  end
+
+  -- Support inline file references (e.g., in multipart)
+  -- Replace lines like "< ./file.png" with file content
+  local result = body:gsub('(^[^\n]*<%s*([^\n]+))', function(full_line, file_ref_inline)
+    local file_path = vim.fn.expand(file_ref_inline:gsub('^%s+', ''):gsub('%s+$', ''))
+    local file = io.open(file_path, 'r')
+    if file then
+      local content = file:read('*all')
+      file:close()
+      -- Replace the line with file content (preserve line prefix before <)
+      local prefix = full_line:match('^(.-)<%s*')
+      return (prefix or '') .. content
+    else
+      vim.notify('Failed to read file: ' .. file_path, vim.log.levels.WARN)
+      return full_line
+    end
+  end)
+
+  return result
+end
+
 --- Validate HTTP request structure and content
 --- @param request table|nil The request object to validate
 --- @return boolean valid True if request is valid
@@ -82,11 +127,18 @@ function M.parse_all_requests(lines)
   local current_request = nil
   local i = 1
 
+  local pending_request_name = nil -- Store @name for next request
+
   while i <= #lines do
     local line = lines[i]
 
+    -- Check for request naming (# @name or // @name)
+    local request_name = line:match('^%s*#%s*@name%s+(.+)') or line:match('^%s*//%s*@name%s+(.+)')
+    if request_name then
+      pending_request_name = request_name:gsub('%s+$', '') -- Trim trailing spaces
+      i = i + 1
     -- Skip empty lines, comments, variable definitions, and auth directives outside of requests
-    if not current_request and (line:match('^%s*$') or line:match('^%s*#') or line:match('^%s*//') or line:match('^@[%w_]+%s*=') or line:match('^%s*@auth%s+')) then
+    elseif not current_request and (line:match('^%s*$') or line:match('^%s*#') or line:match('^%s*//') or line:match('^@[%w_]+%s*=') or line:match('^%s*@auth%s+')) then
       i = i + 1
     -- Detect request separator (###)
     elseif line:match('^###') then
@@ -95,6 +147,8 @@ function M.parse_all_requests(lines)
         table.insert(requests, current_request)
         current_request = nil
       end
+      -- Reset pending name after separator
+      pending_request_name = nil
       i = i + 1
     -- Detect HTTP method
     elseif line:match('^%s*(%u+)%s+(.+)') then
@@ -110,10 +164,40 @@ function M.parse_all_requests(lines)
         headers = {},
         body = nil,
         auth = nil, -- Per-request auth directive
+        name = pending_request_name, -- Assigned name from @name directive
         start_line = i,
         end_line = i,
       }
+      pending_request_name = nil -- Reset after assignment
       i = i + 1
+
+      -- Parse multiline query parameters (vscode-restclient compatible)
+      while i <= #lines do
+        local current_line = lines[i]
+        -- Check for query parameters starting with ? or &
+        local query_param = current_line:match('^%s*([?&].+)')
+        if query_param then
+          -- Remove leading/trailing whitespace
+          query_param = query_param:gsub('^%s+', ''):gsub('%s+$', '')
+          -- Append to URL
+          if query_param:match('^%?') then
+            -- First query param with ?
+            if current_request.url:match('%?') then
+              -- URL already has ?, replace ? with &
+              current_request.url = current_request.url .. '&' .. query_param:sub(2)
+            else
+              current_request.url = current_request.url .. query_param
+            end
+          else
+            -- Additional query param with &
+            current_request.url = current_request.url .. query_param
+          end
+          current_request.end_line = i
+          i = i + 1
+        else
+          break
+        end
+      end
 
       -- Parse auth directive and headers
       while i <= #lines do
@@ -164,7 +248,9 @@ function M.parse_all_requests(lines)
           current_request.end_line = current_request.end_line - 1
         end
         if #body_lines > 0 then
-          current_request.body = table.concat(body_lines, '\n')
+          local body = table.concat(body_lines, '\n')
+          -- Check for file reference (< ./file.json)
+          current_request.body = M._resolve_file_references(body)
         end
       end
     else

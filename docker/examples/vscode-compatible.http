@@ -1,0 +1,161 @@
+# 🔄 VS Code REST Client Compatible Features
+#
+# This file demonstrates nrest.nvim's compatibility with VS Code REST Client syntax.
+# All examples here work in both VS Code REST Client AND nrest.nvim!
+#
+# ⌨️  Execute: Place cursor on request and press <leader>rc (Space + h + c)
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 1️⃣  REQUEST NAMING
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Name your requests for better organization
+# The name appears in the response buffer
+
+# @name getIpAddress
+GET https://httpbin.org/ip
+
+# You can also use // for comments
+// @name getUserAgent
+GET https://httpbin.org/user-agent
+User-Agent: nrest.nvim-vscode-compatible
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 2️⃣  MULTILINE QUERY PARAMETERS
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Spread query parameters across multiple lines for better readability
+# Lines starting with ? or & are automatically appended to the URL
+
+# @name searchWithMultilineParams
+GET https://httpbin.org/get
+?foo=bar
+&baz=qux
+&page=1
+&limit=10
+&sort=desc
+
+# You can mix inline and multiline parameters
+# @name mixedQueryParams
+GET https://httpbin.org/get?existing=param
+?additional=value
+&another=one
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 3️⃣  STANDARD AUTHORIZATION HEADERS
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Use standard HTTP Authorization headers (same syntax as VS Code!)
+
+# Basic Authentication - automatically base64 encoded
+# @name basicAuthStandard
+GET https://httpbin.org/basic-auth/user/passwd
+Authorization: Basic user:passwd
+
+# Bearer Token Authentication
+# @name bearerAuthStandard
+GET https://httpbin.org/bearer
+Authorization: Bearer demo-token-12345
+
+# Digest Authentication
+# @name digestAuthStandard
+GET https://httpbin.org/digest-auth/auth/user/passwd
+Authorization: Digest user passwd
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 4️⃣  FILE REFERENCES (COMING SOON - DEMO ONLY)
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Include file content in request bodies
+# NOTE: This feature is implemented but requires actual files to demo
+
+# Example syntax for JSON file:
+# @name uploadJsonFile
+# POST https://httpbin.org/post
+# Content-Type: application/json
+#
+# < ./data.json
+
+# Example syntax for multipart upload:
+# @name multipartUpload
+# POST https://httpbin.org/post
+# Content-Type: multipart/form-data; boundary=----Boundary
+#
+# ------Boundary
+# Content-Disposition: form-data; name="file"; filename="document.pdf"
+# Content-Type: application/pdf
+#
+# < ./document.pdf
+# ------Boundary--
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 5️⃣  .REST FILE EXTENSION SUPPORT
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# nrest.nvim now supports both .http and .rest file extensions
+# Try renaming this file to .rest - it will still work!
+
+# @name restExtensionDemo
+GET https://httpbin.org/get
+Accept: application/json
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 6️⃣  COMBINING ALL FEATURES
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Combine request naming, multiline params, and standard auth headers!
+
+# @name complexVSCodeRequest
+POST https://httpbin.org/post
+?format=json
+&pretty=true
+&timestamp=2025-10-25
+Authorization: Bearer my-super-secret-token
+Content-Type: application/json
+Accept: application/json
+
+{
+  "message": "This request demonstrates VS Code compatibility",
+  "features": [
+    "Named request",
+    "Multiline query parameters",
+    "Standard Authorization header",
+    "JSON body formatting"
+  ],
+  "compatible_with": ["VS Code REST Client", "nrest.nvim"]
+}
+
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### 7️⃣  LEGACY NREST SYNTAX STILL WORKS
+### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# The original @auth directive syntax is still fully supported!
+# You can mix and match syntaxes in the same file
+
+### Using nrest @auth directive (backward compatible)
+GET https://httpbin.org/basic-auth/user/passwd
+@auth basic user passwd
+
+### Using standard Authorization header (VS Code compatible)
+GET https://httpbin.org/basic-auth/user/passwd
+Authorization: Basic user:passwd
+
+# Both work identically! Choose your preferred syntax.
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 📚 Learn More:
+#   - See auth-examples.http for more authentication methods
+#   - See variables-demo.http for environment variables
+#   - See advanced.http for advanced nrest.nvim features
+#
+# 🎯 VS Code Compatibility Status:
+#   ✅ Request naming (# @name, // @name)
+#   ✅ Multiline query parameters (? and &)
+#   ✅ Standard Authorization headers (Basic, Digest, Bearer)
+#   ✅ File references (< ./file.json)
+#   ✅ .rest file extension
+#   ⏳ Response variables (planned)
+#   ⏳ GraphQL support (planned)
+#
+# 🚀 You can now use your VS Code .http files directly in Neovim!
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

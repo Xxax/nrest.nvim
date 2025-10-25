@@ -160,6 +160,12 @@ end
 function M.format_response(response, config)
   local lines = {}
 
+  -- Add request name if present
+  if response.request_name then
+    table.insert(lines, '# Request: ' .. response.request_name)
+    table.insert(lines, '')
+  end
+
   -- Add status line
   if config.result.show_http_info then
     table.insert(lines, '# ' .. response.status_line)

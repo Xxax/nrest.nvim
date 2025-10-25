@@ -237,4 +237,71 @@ describe('auth', function()
       assert.is_nil(err)
     end)
   end)
+
+  describe('parse_standard_auth_header', function()
+    it('should parse Basic auth with colon separator', function()
+      local request = {
+        headers = {
+          Authorization = 'Basic user:password',
+        },
+      }
+
+      local modified = auth.parse_standard_auth_header(request)
+
+      assert.is_true(modified)
+      assert.is_truthy(request.headers.Authorization:match('^Basic%s+'))
+      -- Check that it's base64 encoded (should not contain colon anymore)
+      assert.is_falsy(request.headers.Authorization:match(':'))
+    end)
+
+    it('should parse Basic auth with space separator', function()
+      local request = {
+        headers = {
+          Authorization = 'Basic user password',
+        },
+      }
+
+      local modified = auth.parse_standard_auth_header(request)
+
+      assert.is_true(modified)
+      assert.is_truthy(request.headers.Authorization:match('^Basic%s+'))
+    end)
+
+    it('should parse Digest auth', function()
+      local request = {
+        headers = {
+          Authorization = 'Digest user password',
+        },
+      }
+
+      local modified = auth.parse_standard_auth_header(request)
+
+      assert.is_true(modified)
+      assert.is_not_nil(request.digest_auth)
+      assert.equals('user', request.digest_auth.username)
+      assert.equals('password', request.digest_auth.password)
+      assert.is_nil(request.headers.Authorization)
+    end)
+
+    it('should not modify Bearer tokens', function()
+      local request = {
+        headers = {
+          Authorization = 'Bearer token123',
+        },
+      }
+
+      local modified = auth.parse_standard_auth_header(request)
+
+      assert.is_false(modified)
+      assert.equals('Bearer token123', request.headers.Authorization)
+    end)
+
+    it('should return false when no Authorization header', function()
+      local request = { headers = {} }
+
+      local modified = auth.parse_standard_auth_header(request)
+
+      assert.is_false(modified)
+    end)
+  end)
 end)

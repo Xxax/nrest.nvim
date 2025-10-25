@@ -113,7 +113,14 @@ check:health:
 # Secret Detection - Scan for leaked credentials
 secrets-detection:
   stage: security
-  image: zricethezav/gitleaks:latest
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git curl
+    # Install gitleaks
+    - |
+      GITLEAKS_VERSION="8.18.4"
+      curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /usr/local/bin
+      chmod +x /usr/local/bin/gitleaks
   script:
     - echo "🔍 Scanning for secrets with gitleaks..."
     - gitleaks detect --verbose --redact --config .gitleaks.toml
@@ -122,6 +129,7 @@ secrets-detection:
     - merge_requests
   tags:
     - docker
+    - linux
   allow_failure: false  # Block pipeline if secrets are found
 
 # SAST (Static Application Security Testing)

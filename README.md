@@ -22,7 +22,7 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 - ✅ Request validation (method, URL scheme, headers)
 - 🔄 Automatic redirect handling
 - 📦 Zero Lua dependencies (only requires curl)
-- 🧪 Comprehensive test suite with 80+ test cases
+- 🧪 Comprehensive test suite with 80 test cases
 - 🏥 Built-in health check (`:checkhealth nrest`)
 - 🔐 Security-hardened (pure Lua Base64, header validation)
 - 📚 Full LuaDoc API documentation
@@ -65,7 +65,6 @@ You can install from either repository - both URLs work with all Neovim plugin m
       -- Syntax highlighting
       highlight = {
         enabled = true,
-        timeout = 150,
       },
 
       -- Result display options
@@ -117,7 +116,6 @@ use {
       env_file = nil,
       highlight = {
         enabled = true,
-        timeout = 150,
       },
       result = {
         show_url = true,
@@ -187,13 +185,13 @@ Want to test nrest.nvim without installing anything? Use our Docker demo environ
 docker pull gitlab.ttu.ch:5050/matthias/nrest/demo:latest
 docker run -it gitlab.ttu.ch:5050/matthias/nrest/demo:latest
 
-# The container starts with Neovim and 80+ example requests ready to execute
+# The container starts with Neovim and 80 example requests ready to execute
 # Press <Space>rc to run a request under cursor
 ```
 
 **What's included:**
 - ✅ Neovim + nrest.nvim pre-configured
-- ✅ 80+ example HTTP requests (GET, POST, auth, variables, etc.)
+- ✅ 80 example HTTP requests (GET, POST, auth, variables, etc.)
 - ✅ All dependencies (curl, jq)
 - ✅ Interactive tutorial files
 
@@ -228,6 +226,8 @@ Accept: application/json
 
 - **Run request under cursor**: Press `<leader>rc` (or use `:NrestRunCursor`)
 - **Run first request in file**: Press `<leader>rr` (or use `:NrestRun`)
+
+> **Note:** `<leader>` is typically the Space key in Neovim. So `<leader>rc` means pressing Space, then r, then c.
 
 The response will be displayed in a split window with:
 - HTTP status line
@@ -538,7 +538,6 @@ require('nrest').setup({
   -- Syntax highlighting
   highlight = {
     enabled = true,
-    timeout = 150,
   },
 
   -- Result display options
@@ -696,6 +695,11 @@ This will verify all dependencies and show your current configuration.
 - [ ] Import from Postman/Insomnia collections
 - [ ] Custom response handlers/hooks
 
+**Recently Completed (v0.2.1):**
+- [x] **Security infrastructure** (GitLab Security Scanning, pre-commit hooks)
+- [x] **Security documentation** (SECURITY.md, docs/SETUP-SECURITY.md)
+- [x] **CI/CD improvements** (gitleaks, template fixes, pipeline reliability)
+
 **Recently Completed (v0.2.0):**
 - [x] **VS Code REST Client compatibility improvements**
   - [x] File references (`< ./file.json`) in request bodies
@@ -703,7 +707,7 @@ This will verify all dependencies and show your current configuration.
   - [x] Request naming (`# @name requestName`)
   - [x] Standard Authorization headers (Basic, Digest, Bearer)
   - [x] `.rest` file extension support
-- [x] Comprehensive test suite (80+ test cases with plenary.nvim)
+- [x] Comprehensive test suite (80 test cases with plenary.nvim)
 - [x] Health check system (`:checkhealth nrest`)
 - [x] Security hardening (pure Lua Base64, header validation)
 - [x] Full LuaDoc API documentation

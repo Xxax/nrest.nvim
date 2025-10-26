@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-10-26
+
+### Security
+
+#### GitLab Security Scanning Integration
+- Integrated GitLab Security Scanning templates into CI/CD pipeline
+- Added Secret Detection job to scan for exposed credentials
+- Added SAST (Static Application Security Testing) job for code analysis
+- Jobs run on merge requests and main branch pushes
+- Configured to use `docker` and `linux` tags for GitLab runners
+
+#### Pre-commit Hook Enhancements
+- Added comprehensive pre-commit hook to prevent secret leaks
+- Checks for common secret patterns (API keys, tokens, passwords)
+- Validates .env.http files are gitignored
+- Runs gitleaks scan if available
+- Prevents commits with detected secrets
+
+#### Security Documentation
+- Added `SECURITY.md` - Security policy and vulnerability reporting
+- Added `docs/SETUP-SECURITY.md` - Security setup guide for contributors
+- Updated README.md with security best practices section
+- Added warnings about secret management
+
+### Fixed
+
+#### CI/CD Improvements
+- Fixed gitleaks job to use Alpine image with shell support
+- Fixed CI/CD template conflicts by removing redundant `only` rules
+- Configured fresh git clone for secrets-detection job to ensure clean scans
+- Improved pipeline reliability and error handling
+
+#### Documentation Fixes
+- Fixed keybinding documentation inconsistencies (Space+hc → Space+rc)
+- Updated email address in documentation
+- Corrected README.md examples to match actual keybindings
+
+### Changed
+
+#### Security Hardening
+- Removed exposed `.env.http` file with demonstration token
+- All example files now use placeholder values
+- Added `.env.http` to `.gitignore` by default
+- Enhanced commit message validation in pre-commit hook
+
+### Notes
+
+This is a maintenance release focusing on security infrastructure and preventing accidental credential exposure. No functional changes to the plugin itself.
+
+**Security Improvements Summary:**
+- 🔒 GitLab Security Scanning (Secret Detection + SAST)
+- 🔒 Pre-commit hooks with secret detection
+- 📚 Comprehensive security documentation
+- ⚠️ Example files sanitized
+
 ## [0.2.0] - 2025-10-25
 
 ### Added - VS Code REST Client Compatibility 🎉

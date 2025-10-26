@@ -8,7 +8,7 @@ Try **nrest.nvim** without installing anything on your system! This Docker conta
 
 ```bash
 # Pull and run the container
-docker run -it ghcr.io/matthias/nrest-demo:latest
+docker run -it gitlab.ttu.ch:5050/matthias/nrest/demo:latest
 
 # Or build locally
 cd docker
@@ -32,12 +32,12 @@ docker-compose down
 ## 📚 What's Included
 
 - **Neovim** (latest stable from Alpine Linux)
-- **nrest.nvim** (v0.2.0) - Pre-configured and ready to use
+- **nrest.nvim** (v0.2.1) - Pre-configured and ready to use
 - **Dependencies**: curl, jq, git
 - **Plugin Manager**: lazy.nvim
 - **Theme**: Tokyo Night
 - **Status Line**: lualine.nvim
-- **Example Files**: 7+ demo .http files with 80+ request examples
+- **Example Files**: 7+ demo .http files with 80 request examples
 - **🆕 VS Code REST Client compatible features!**
 
 ## 🎯 Features You Can Test
@@ -362,8 +362,8 @@ docker-compose exec nrest nvim
 
 Found an issue or want to improve the demo?
 
-1. Check existing issues: https://gitlab.ttu.ch/matthias/nrest/-/issues
-2. Submit a merge request with your improvements
+1. Check existing issues: https://github.com/Xxax/nrest.nvim/issues
+2. Submit a pull request with your improvements
 3. Read CLAUDE.md and .ai-assistant/RULES.md first
 
 ## 📄 License
@@ -372,9 +372,10 @@ MIT License - see LICENSE file for details
 
 ## 🔗 Links
 
-- **Repository**: https://gitlab.ttu.ch/matthias/nrest
-- **Issues**: https://gitlab.ttu.ch/matthias/nrest/-/issues
-- **Release**: https://gitlab.ttu.ch/matthias/nrest/-/releases/v0.1.3
+- **Repository**: https://gitlab.ttu.ch/matthias/nrest (primary) / https://github.com/Xxax/nrest.nvim (mirror)
+- **Issues**: https://github.com/Xxax/nrest.nvim/issues
+- **Pull Requests**: https://github.com/Xxax/nrest.nvim/pulls
+- **Releases**: https://github.com/Xxax/nrest.nvim/releases
 - **Documentation**: Run `:help nrest` in the container
 
 ## 💡 Next Steps
@@ -384,11 +385,11 @@ After trying the demo:
 1. ⭐ Star the project if you like it!
 2. 📖 Read the full documentation: `:help nrest`
 3. 🔧 Install on your system: See main README.md
-4. 🐛 Report issues: Use the issue tracker
-5. 🤝 Contribute: Submit merge requests
+4. 🐛 Report issues: https://github.com/Xxax/nrest.nvim/issues
+5. 🤝 Contribute: https://github.com/Xxax/nrest.nvim/pulls
 
 ---
 
 **Enjoy testing nrest.nvim!** 🚀
 
-For more information, visit: https://gitlab.ttu.ch/matthias/nrest
+For more information, visit: https://github.com/Xxax/nrest.nvim

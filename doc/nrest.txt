@@ -16,7 +16,8 @@ CONTENTS                                                      *nrest-contents*
   11. Response Display ................................ |nrest-response|
   12. Examples ........................................ |nrest-examples|
   13. Troubleshooting ................................. |nrest-troubleshooting|
-  14. About ........................................... |nrest-about|
+  14. Security ........................................ |nrest-security|
+  15. About ........................................... |nrest-about|
 
 ==============================================================================
 INTRODUCTION                                              *nrest-introduction*
@@ -41,6 +42,8 @@ Features:
   • Multiline query parameters
   • Request validation
   • Automatic redirect handling
+  • Security-hardened (pure Lua Base64, header validation)
+  • 80 automated test cases with comprehensive coverage
   • Zero external Lua dependencies (uses curl)
 
 ==============================================================================
@@ -155,7 +158,6 @@ Configure nrest.nvim using the `setup()` function:
     env_file = nil,
     highlight = {
       enabled = true,
-      timeout = 150,
     },
     result = {
       show_url = true,
@@ -212,9 +214,6 @@ highlight                       (table)
 
     highlight.enabled           (boolean, default: true)
         Enable syntax highlighting for .http files.
-
-    highlight.timeout           (number, default: 150)
-        Highlighting timeout in milliseconds.
 
                                                           *nrest-config-result*
 result                          (table)
@@ -916,12 +915,51 @@ If the result buffer doesn't appear:
   • Look for error messages with `:messages`
 
 ==============================================================================
+SECURITY                                                      *nrest-security*
+
+⚠️ IMPORTANT: Never commit secrets (API tokens, passwords) to git!
+
+Use Environment Variables ~
+
+Use system environment variables for sensitive data:
+>http
+    GET https://api.example.com/data
+    Authorization: Bearer $API_TOKEN
+<
+
+Or Use .env.http Files ~
+
+Store secrets in .env.http files (add to .gitignore):
+>http
+    # .env.http (NOT committed)
+    @API_TOKEN = your-real-token
+
+    # api.http (safe to commit)
+    GET https://api.example.com/data
+    Authorization: Bearer {{API_TOKEN}}
+<
+
+Security Features (v0.2.1+) ~
+
+nrest.nvim includes several security features:
+  • GitLab Security Scanning (Secret Detection + SAST)
+  • Pre-commit hooks to prevent secret leaks
+  • Pure Lua Base64 encoding (no shell injection)
+  • Header value validation (prevents command injection)
+  • Callback race condition guards
+
+For More Information ~
+
+See SECURITY.md for comprehensive security guidelines and best practices.
+Setup guide: docs/SETUP-SECURITY.md
+
+==============================================================================
 ABOUT                                                            *nrest-about*
 
 Author:         Matthias
 Repository:     https://gitlab.ttu.ch/matthias/nrest.git
 License:        MIT License
-Version:        0.2.0
+Version:        0.2.1
 
 Inspired by VS Code's REST Client extension with extensive compatibility.
 

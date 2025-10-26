@@ -189,7 +189,7 @@ This repository includes:
 If you discover a security vulnerability:
 
 1. **DO NOT** open a public issue
-2. Email: security@example.com (or create a confidential GitLab issue)
+2. Email: nrest-info.35hqm@passmail.net (or create a confidential GitLab issue)
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce

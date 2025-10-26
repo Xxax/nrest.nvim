@@ -203,7 +203,7 @@ See [docker/README.md](docker/README.md) for detailed usage instructions.
 
 Create a file with the `.http` or `.rest` extension and write your HTTP requests:
 
-```http
+```bash
 ### Simple GET request
 GET https://api.github.com/users/github
 
@@ -238,7 +238,7 @@ The response will be displayed in a split window with:
 
 Use `###` to separate multiple requests in the same file:
 
-```http
+```bash
 ### First request
 GET https://api.example.com/users
 
@@ -250,7 +250,7 @@ GET https://api.example.com/posts
 
 Name your requests for better organization using `# @name` or `// @name`:
 
-```http
+```bash
 # @name getUserById
 GET https://api.example.com/users/123
 
@@ -269,7 +269,7 @@ Request names are displayed in the response buffer for easy identification.
 
 Spread query parameters across multiple lines for better readability:
 
-```http
+```bash
 GET https://api.example.com/search
 ?query=neovim
 &category=plugins
@@ -278,7 +278,7 @@ GET https://api.example.com/search
 ```
 
 This is equivalent to:
-```http
+```bash
 GET https://api.example.com/search?query=neovim&category=plugins&sort=stars&limit=10
 ```
 
@@ -286,7 +286,7 @@ GET https://api.example.com/search?query=neovim&category=plugins&sort=stars&limi
 
 Include file content in request bodies using the `<` operator:
 
-```http
+```bash
 ### Upload JSON data
 POST https://api.example.com/data
 Content-Type: application/json
@@ -316,19 +316,19 @@ nrest.nvim supports common authentication methods with simple directives **and**
 Use standard HTTP `Authorization` headers just like in VS Code REST Client:
 
 **Basic Authentication:**
-```http
+```bash
 GET https://httpbin.org/basic-auth/user/passwd
 Authorization: Basic user:passwd
 ```
 
 **Digest Authentication:**
-```http
+```bash
 GET https://httpbin.org/digest-auth/auth/user/passwd
 Authorization: Digest user passwd
 ```
 
 **Bearer Token:**
-```http
+```bash
 GET https://api.example.com/protected
 Authorization: Bearer your-token-here
 ```
@@ -340,7 +340,7 @@ These are automatically detected and processed. Basic and Digest auth credential
 Apply authentication to individual requests by placing the `@auth` directive after the HTTP method line:
 
 **Basic Authentication:**
-```http
+```bash
 ### Authenticated request
 GET https://api.example.com/protected
 @auth basic username password
@@ -350,28 +350,28 @@ GET https://api.example.com/public
 ```
 
 **Bearer Token Authentication:**
-```http
+```bash
 ### Request with bearer token
 GET https://api.example.com/user/profile
 @auth bearer your-token-here
 ```
 
 **API Key Authentication:**
-```http
+```bash
 ### Request with API key
 GET https://api.example.com/data
 @auth apikey X-API-Key your-api-key-here
 ```
 
 **Digest Authentication:**
-```http
+```bash
 ### Request with digest auth
 GET https://api.example.com/protected
 @auth digest username password
 ```
 
 **Authentication with Variables:**
-```http
+```bash
 @token = my-secret-token
 
 ### Uses the variable defined above
@@ -380,7 +380,7 @@ GET https://api.example.com/protected
 ```
 
 **Authentication with System Environment Variables:**
-```http
+```bash
 # Using system env vars directly in auth
 GET https://api.example.com/protected
 @auth bearer $API_TOKEN
@@ -396,7 +396,7 @@ GET https://api.example.com/user
 
 For backward compatibility, you can define authentication at the file level. The `@auth` directive will apply to ALL requests in the file:
 
-```http
+```bash
 @auth bearer global-token-123
 
 ### Request 1 (uses global auth)
@@ -424,7 +424,7 @@ GET https://api.example.com/posts
 
 Define and use variables in your `.http` files:
 
-```http
+```bash
 # Define variables
 @baseUrl = https://api.example.com
 @token = Bearer abc123
@@ -466,7 +466,7 @@ Authorization: {{token}}
 **Important:** Don't mix syntaxes! Use `{{var}}` for user-defined, `$VAR` for system env.
 
 **Combining variables:**
-```http
+```bash
 # User variable can reference system env
 @apiKey = Bearer $USER
 @dataPath = ${HOME}/api-data
@@ -477,7 +477,7 @@ X-Path: {{dataPath}}
 ```
 
 **System environment variable example:**
-```http
+```bash
 # Set in shell: export API_TOKEN=secret123
 GET https://api.example.com/data
 Authorization: Bearer $API_TOKEN
@@ -758,13 +758,13 @@ nvim --headless -u tests/minimal_init.lua -c "PlenaryBustedDirectory tests/ {min
 ⚠️ **IMPORTANT**: Never commit secrets (API tokens, passwords) to git!
 
 **Use environment variables:**
-```http
+```bash
 GET https://api.example.com/data
 Authorization: Bearer $API_TOKEN
 ```
 
 **Or use .env.http files (gitignored):**
-```http
+```bash
 # .env.http (NOT committed)
 @API_TOKEN = your-real-token
 

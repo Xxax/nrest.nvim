@@ -19,7 +19,6 @@ A fast and lightweight HTTP REST client for Neovim, inspired by VS Code's REST C
 - 🔑 Environment variable support (user-defined and system)
 - 📁 File references for request bodies (`< ./file.json`)
 - 🏷️ Request naming for better organization (`# @name requestName`)
-- ⌨️ **Autocompletion** (HTTP methods, headers, variables, env vars, auth directives)
 - ✅ Request validation (method, URL scheme, headers)
 - 🔄 Automatic redirect handling
 - 📦 Zero Lua dependencies (only requires curl)
@@ -234,36 +233,6 @@ The response will be displayed in a split window with:
 - HTTP status line
 - Response headers
 - Response body
-
-### Autocompletion
-
-nrest.nvim provides built-in autocompletion for `.http` files using Neovim's omnifunc:
-
-**What's completed:**
-- **HTTP Methods** - GET, POST, PUT, PATCH, DELETE, etc.
-- **Header Names** - Content-Type, Authorization, Accept, etc.
-- **Content-Type Values** - application/json, text/html, etc.
-- **Variables** - `{{variableName}}` from defined `@var = value`
-- **System Env Vars** - `$HOME`, `$USER`, `$API_TOKEN`, etc.
-- **Auth Directives** - `@auth basic`, `@auth bearer`, etc.
-
-**How to use:**
-- Press `<C-x><C-o>` (Ctrl+X, Ctrl+O) to trigger completion
-- Works automatically in insert mode at appropriate contexts
-- Compatible with completion plugins (nvim-cmp, coc.nvim, etc.)
-
-**Example:**
-```bash
-### Start typing and press <C-x><C-o>
-G    # Completes to: GET, POST, PUT, etc.
-
-GET https://api.example.com
-Con    # Completes to: Content-Type, Content-Length, etc.
-
-Authorization: {{    # Completes to: {{myToken}}, {{baseUrl}}, etc.
-
-@auth     # Completes to: @auth basic, @auth bearer, etc.
-```
 
 ### Request Separators
 

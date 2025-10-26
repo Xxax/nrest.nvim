@@ -13,8 +13,5 @@ setlocal comments=:#,://
 setlocal formatoptions-=t
 setlocal formatoptions+=croql
 
-" Set up autocompletion
-lua require('nrest.completion').setup()
-
 " Set buffer-local undo
-let b:undo_ftplugin = "setlocal commentstring< comments< formatoptions< omnifunc<"
+let b:undo_ftplugin = "setlocal commentstring< comments< formatoptions<"

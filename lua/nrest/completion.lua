@@ -268,7 +268,7 @@ function M.setup()
   vim.bo.omnifunc = "v:lua.require('nrest.completion').omnifunc"
 
   -- Enable completion options
-  vim.bo.completopt = "menu,menuone,noselect"
+  vim.bo.completeopt = "menu,menuone,noselect"
 end
 
 return M

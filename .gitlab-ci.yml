@@ -78,10 +78,12 @@ lint:luacheck:
   image: alpine:latest
   before_script:
     - apk add --no-cache luarocks gcc musl-dev
-    - export PATH=$PATH:/usr/local/bin
-    - luarocks install luacheck
+    - export PATH=$PATH:/usr/local/bin:/usr/bin
+    - which luarocks || echo "luarocks not in PATH"
+    - /usr/bin/luarocks install luacheck
   script:
-    - export PATH=$PATH:/usr/local/bin
+    - export PATH=$PATH:/usr/local/bin:/root/.luarocks/bin
+    - which luacheck || echo "luacheck not in PATH"
     - luacheck lua/ --globals vim --no-unused-args
   only:
     - merge_requests

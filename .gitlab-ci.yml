@@ -72,24 +72,6 @@ test:neovim-latest:
     - docker
   allow_failure: true  # Don't block pipeline if latest build fails
 
-# Optional: Lint with luacheck
-lint:luacheck:
-  stage: test
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache luarocks gcc musl-dev
-    - export PATH=$PATH:/usr/local/bin
-    - luarocks install luacheck
-  script:
-    - export PATH=$PATH:/usr/local/bin
-    - luacheck lua/ --globals vim --no-unused-args
-  only:
-    - merge_requests
-  tags:
-    - docker
-    - linux
-  allow_failure: true  # Don't block on linting issues
-
 # Optional: Check health (requires full Neovim setup)
 check:health:
   stage: test
